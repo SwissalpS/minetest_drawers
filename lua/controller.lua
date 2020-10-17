@@ -346,25 +346,55 @@ local function controller_on_blast(pos)
 end
 
 local function controller_allow_metadata_inventory_put(pos, listname, index, stack, player)
+print('controller_allow_metadata_inventory_put')
 	if (player and core.is_protected(pos, player:get_player_name())) or listname ~= "src" then
 		return 0
 	end
 
-	local drawer_net_index = controller_get_drawer_index(pos, stack:get_name())
+	local use_all = 0 < core.get_meta(pos):get_int("use_all")
+	local name = stack:get_name()
+print(name, stack:get_count(), stack:get_stack_max())
+	local drawer_net_index = controller_get_drawer_index(pos, name)
+	local drawer = drawer_net_index[name]
+	local drawer_MT = drawer_net_index["empty"]
 
-	if drawer_net_index[stack:get_name()] then
-		local drawer = drawer_net_index[stack:get_name()]
+	if drawer then
+		local drawer_pos = drawer.drawer_pos
+		local visualid = drawer.visualid
+		local content = drawers.drawer_get_content(drawer_pos, visualid)
 
-		if drawers.drawer_get_content(drawer.drawer_pos, drawer.visualid).name == stack:get_name() then
-			return drawers.drawer_can_insert_stack(drawer.drawer_pos, stack, drawer["visualid"])
+		if content.name == name then
+			local fit = drawers.drawer_can_insert_stack(drawer_pos, stack, visualid)
+print('fit', fit, 'use_all', use_all)
+			local diff = stack:get_count() - fit
+			if use_all and 0 < diff then
+print('need additional drawer')
+				-- check if there is an empty drawer available
+				-- TODO: (in another round of changes)
+				--       refactor the way drawers deal with max size
+				--       and add capability to handle stacks bigger than what
+				--       can fit in one drawer
+				if drawer_MT then
+					local content_MT = drawers.drawer_get_content(
+								drawer_MT.drawer_pos, drawer_MT.visualid)
+						if "" == content_MT.name then
+							local leftover = ItemStack({ name = name, count = diff })
+							fit = fit + drawers.drawer_can_insert_stack(
+								drawer_MT.drawer_pos, leftover, drawer_MT.visualid)
+						end
+				end
+			end
+			return fit
 		end
 	end
 
-	if drawer_net_index["empty"] then
-		local drawer = drawer_net_index["empty"]
+	if drawer_MT then
+		local drawer_MT_pos = drawer_MT.drawer_pos
+		local visualid_MT = drawer_MT.visualid
+		local content_MT = drawers.drawer_get_content(drawer_MT_pos, visualid_MT)
 
-		if drawers.drawer_get_content(drawer.drawer_pos, drawer.visualid).name == "" then
-			return drawers.drawer_can_insert_stack(drawer.drawer_pos, stack, drawer.visualid)
+		if "" == content_MT.name then
+			return drawers.drawer_can_insert_stack(drawer_MT_pos, stack, visualid_MT)
 		end
 	end
 
@@ -386,6 +416,7 @@ local function controller_allow_metadata_inventory_take(pos, listname, index, st
 end
 
 local function controller_on_metadata_inventory_put(pos, listname, index, stack, player)
+print('controller_on_metadata_inventory_put')
 	if listname ~= "src" then
 		return
 	end

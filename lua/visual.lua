@@ -278,6 +278,7 @@ core.register_entity("drawers:visual", {
 	end,
 
 	can_insert_stack = function(self, stack)
+print('visual:can_insert_stack')
 		if stack:get_name() == "" or stack:get_count() <= 0 then
 			return 0
 		end
@@ -463,3 +464,4 @@ core.register_lbm({
 		drawers.spawn_visuals(pos)
 	end
 })
+
