@@ -59,6 +59,7 @@ local entity_def = {
 	-- dump our parameters into cabinet meta data
 	-- custom field, was renamed
 	save_metadata = drawers.tag.save_metadata,
+	migrate_cabinet_meta = drawers.tag.migrate_cabinet_meta
 
 } -- entity_def
 
@@ -71,28 +72,28 @@ local function lbm_action(pos, node)
 	meta:set_string('formspec', drawers.cabinet.formspec)
 
 	-- count the drawer tags
-	local drawer_type = minetest.registered_nodes[node.name].groups.drawers
+	local drawer_count = minetest.registered_nodes[node.name].groups.drawers
 	local found_tags = 0
 	local objects = minetest.get_objects_inside_radius(pos, 0.56)
 	local luaentity
 	if objects then
-		for _, object in pairs(objects) do
+		for _, object in ipairs(objects) do
 			luaentity = object:get_luaentity()
 			-- TODO: test if we need to check for nil objects and luaentities
-			if 'drawers:visual' == luaentity().name then
+			if 'drawers:visual' == luaentity.name then
 				found_tags = found_tags + 1
 			end -- if
 		end -- loop all found objects
 	end -- if any objects found at all
 
 	-- if all drawer tags were found, return
-	if found_tags == drawer_type then
+	if found_tags == drawer_count then
 		return
 	end
 
 	-- not enough tags found, remove existing and create new ones
-	drawers.tag.remove_tags(pos)
-	drawers.tag.spawn_tags(pos)
+	drawers.tag.map.remove_for(pos)
+	drawers.tag.map.spawn_for(pos)
 
 end -- lbm_action
 

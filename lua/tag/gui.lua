@@ -8,6 +8,7 @@ local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 drawers.tag.gui = {}
 
 function drawers.tag.gui.generate_info_text(basename, count, factor, stack_max)
+	-- TODO: collect all places that do this math and use one function
 	local max_count = stack_max * factor
 	local percent = count / max_count * 100
 	-- round the number (float -> int)

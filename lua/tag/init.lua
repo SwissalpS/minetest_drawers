@@ -7,6 +7,7 @@
 -- may be referenced as dt or dtag
 drawers.tag = {}
 -- hacky cache to keep track of tags
+-- TODO: make sure deactivated ones are dereferenced unless that makes no sense
 drawers.tag.tags = {}
 
 dofile(drawers.modpath .. '/lua/tag/gui.lua')

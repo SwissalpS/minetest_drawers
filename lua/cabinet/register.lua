@@ -7,24 +7,24 @@ local dcab = drawers.cabinet
 
 -- cabinet registration function for node and recipe
 function drawers.cabinet.register(name, def)
-	def.description = def.description or S('Wooden')
-	def.drawtype = 'nodebox'
-	def.node_box = { type = 'fixed', fixed = dcab.node_box_simple }
 	def.collision_box = { type = 'regular' }
-	def.selection_box = { type = 'fixed', fixed = dcab.node_box_simple }
+	def.description = def.description or S('Wooden')
+	-- TODO: treat as slots and cut of at INT_16_MAX = 65535
+	def.drawers_stack_max_factor = def.drawers_stack_max_factor or 24
+	def.drawtype = 'nodebox'
+	def.groups = def.groups or {}
+	def.legacy_facedir_simple = true
+	def.node_box = { type = 'fixed', fixed = dcab.gui.node_box_simple }
 	def.paramtype = 'light'
 	def.paramtype2 = 'facedir'
-	def.legacy_facedir_simple = true
-	def.groups = def.groups or {}
-	-- TODO: treat as slots and cut of at INT_16_MAX = 65535
-	def.drawer_stack_max_factor = def.drawer_stack_max_factor or 24
+	def.selection_box = { type = 'fixed', fixed = dcab.gui.node_box_simple }
 
 	-- events
+	def.allow_metadata_inventory_put = drawers.cabinet.allow_upgrade_change
+	def.allow_metadata_inventory_take = drawers.cabinet.allow_upgrade_change
 	def.on_construct = drawers.cabinet.on_construct
 	def.on_destruct = drawers.cabinet.on_destruct
 	def.on_dig = drawers.cabinet.on_dig
-	def.allow_metadata_inventory_put = drawers.cabinet.allow_upgrade_change
-	def.allow_metadata_inventory_take = drawers.cabinet.allow_upgrade_change
 	def.on_metadata_inventory_put = drawers.cabinet.add_drawer_upgrade
 	def.on_metadata_inventory_take = drawers.cabinet.remove_drawer_upgrade
 
@@ -33,12 +33,11 @@ function drawers.cabinet.register(name, def)
 	end
 
 	if drawers.has_pipeworks then
+		def.after_dig_node = pipeworks.after_dig
+		def.after_place_node = pipeworks.after_place
 		def.groups.tubedevice = 1
 		def.groups.tubedevice_receiver = 1
 		def.tube = def.tube or {}
-		def.tube.insert_object = def.tube.insert_object
-			or drawers.cabinet.insert_object_from_tube
-
 		def.tube.can_insert = def.tube.can_insert
 			or drawers.drawer_can_insert_stack_from_tube
 
@@ -46,21 +45,27 @@ function drawers.cabinet.register(name, def)
 			back = 1, bottom = 1,
 			left = 1, right = 1, top = 1
 		}
-		def.after_place_node = pipeworks.after_place
-		def.after_dig_node = pipeworks.after_dig
-	end
 
+		def.tube.insert_object = def.tube.insert_object
+			or drawers.cabinet.insert_object_from_tube
+
+	end -- if has pipeworks installed
+
+	local name_full
 	if drawers.settings.use_cabinet_1x1 then
 		-- normal drawer 1x1 = 1
 		local def1 = table.copy(def)
 		def1.description = S('@1 Drawer', def.description)
+		def1.groups.drawers = 1
 		def1.tiles = def.tiles or def.tiles1
 		def1.tiles1 = nil
 		def1.tiles2 = nil
 		def1.tiles4 = nil
-		def1.groups.drawers = 1
-		minetest.register_node(name .. '1', def1)
-		minetest.register_alias(name, name .. '1') -- 1x1 drawer is the default one
+
+		name_full = name .. '1'
+		minetest.register_node(name_full, def1)
+		-- 1x1 drawer is the default one
+		minetest.register_alias(name, name_full)
 		if drawers.has_mesecons_mvps then
 			-- don't let drawers be moved by pistons, visual glitches and
 			-- possible duplication bugs occur otherwise
@@ -72,14 +77,17 @@ function drawers.cabinet.register(name, def)
 		-- 1x2 = 2
 		local def2 = table.copy(def)
 		def2.description = S('@1 Drawers (1x2)', def.description)
+		def2.groups.drawers = 2
 		def2.tiles = def.tiles2
 		def2.tiles1 = nil
 		def2.tiles2 = nil
 		def2.tiles4 = nil
-		def2.groups.drawers = 2
-		minetest.register_node(name .. '2', def2)
+
+		name_full = name .. '2'
+		pd(name_full) pd(def2)
+		minetest.register_node(name_full, def2)
 		if drawers.has_mesecons_mvps then
-			mesecon.register_mvps_stopper(name .. '2')
+			mesecon.register_mvps_stopper(name_full)
 		end
 	end -- if 1x2
 
@@ -87,19 +95,21 @@ function drawers.cabinet.register(name, def)
 		-- 2x2 = 4
 		local def4 = table.copy(def)
 		def4.description = S('@1 Drawers (2x2)', def.description)
+		def4.groups.drawers = 4
 		def4.tiles = def.tiles4
 		def4.tiles1 = nil
 		def4.tiles2 = nil
 		def4.tiles4 = nil
-		def4.groups.drawers = 4
-		minetest.register_node(name .. '4', def4)
+
+		name_full = name .. '4'
+		minetest.register_node(name_full, def4)
 		if drawers.has_mesecons_mvps then
-			mesecon.register_mvps_stopper(name .. '4')
+			mesecon.register_mvps_stopper(name_full)
 		end
 	end -- if 2x2
 
 	if (not def.no_craft) and def.material then
-		local ds = drawers.settings
+		local dset = drawers.settings
 		if drawers.settings.use_cabinet_1x1 then
 			minetest.register_craft({
 				output = name .. '1',
@@ -114,9 +124,9 @@ function drawers.cabinet.register(name, def)
 			minetest.register_craft({
 				output = name .. '2 2',
 				recipe = {
-					{ def.material, ds.settings.chest_itemstring, def.material },
+					{ def.material, dset.chest_itemstring, def.material },
 					{ def.material, def.material, def.material },
-					{ def.material, ds.settings.chest_itemstring, def.material }
+					{ def.material, dset.chest_itemstring, def.material }
 				}
 			})
 		end -- if 1x2
@@ -124,9 +134,9 @@ function drawers.cabinet.register(name, def)
 			minetest.register_craft({
 				output = name .. '4 4',
 				recipe = {
-					{ ds.chest_itemstring, def.material, ds.chest_itemstring },
+					{ dset.chest_itemstring, def.material, dset.chest_itemstring },
 					{ def.material, def.material, def.material },
-					{ ds.chest_itemstring, def.material, ds.chest_itemstring }
+					{ dset.chest_itemstring, def.material, dset.chest_itemstring }
 				}
 			})
 		end -- if 2x2
@@ -145,19 +155,19 @@ elseif drawers.has_mcl_core then
 else
 	drawers.cabinet.register('drawers:wood', {
 		description = S('Wooden'),
+		-- TODO: a) rename b) find better solution in functions using this.
+		-- the fact that we can currently put in stacks of 65535 items into
+		-- drawers that don't even have upgrades, is troubling.
+		drawers_stack_max_factor = 4 * 8, -- 32 normal chest size
+		groups = { choppy = 3, oddly_breakable_by_hand = 2 },
+		material = drawers.settings.wood_itemstring,
+		sounds = drawers.settings.wood_sounds,
 		tiles1 = drawers.cabinet.tiles_front_other('drawers_wood_front_1.png',
 												'drawers_wood.png'),
 		tiles2 = drawers.cabinet.tiles_front_other('drawers_wood_front_2.png',
 												'drawers_wood.png'),
 		tiles4 = drawers.cabinet.tiles_front_other('drawers_wood_front_4.png',
 												'drawers_wood.png'),
-		groups = { choppy = 3, oddly_breakable_by_hand = 2 },
-		sounds = drawers.settings.wood_sounds,
-		-- TODO: a) rename b) find better solution in functions using this.
-		-- the fact that we can currently put in stacks of 65535 items into
-		-- drawers that don't even have upgrades, is troubling.
-		drawer_stack_max_factor = 4 * 8, -- 32 normal chest size
-		material = drawers.settings.wood_itemstring
 	})
 end -- switch game type
 

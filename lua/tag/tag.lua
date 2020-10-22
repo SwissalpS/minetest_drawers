@@ -50,13 +50,21 @@ end -- drawers.tag.migrate
 -- this is called when entity is deactivated, it MUST return a string.
 -- this string will be passed to on_activate when entity is restored.
 function drawers.tag.get_serialized_static_data(self)
+	if not self.pos_cabinet then
+		--self.object:remove()
+		return ''
+	end
 	return minetest.serialize({
+		-- TODO: let's test if it wouldn't be better to only store
+		-- tag_id and texture in entity, rest in cabinet meta
+		-- since it seems to work well to find cabinet node
+		-- with minetest.get_node(self.object:get_pos())
 		-- do we really need to store this here too?
-		c = self.drawer_count, -- how many drawers in this cabinet
+		c = self.drawer_count or 1, -- how many drawers in this cabinet
 		-- index in cabinet
-		i = self.tag_id,
+		i = self.tag_id or '',
 		-- texture of item stored in drawer
-		t = self.texture,
+		t = self.texture or '',
 		-- position of cabinet node
 		x = self.pos_cabinet.x,
 		y = self.pos_cabinet.y,
@@ -71,8 +79,10 @@ function drawers.tag.on_activate(self, static_data_serialized, delta_seconds)
 	-- TODO: why are we using object pos here and pos_cabinet later for same
 	-- variable?
 	-- Now that I moved this block to beginning it makes more sense to use object pos
-	local cabinet_node = minetest.get_node(self.object:get_pos())
-	if 0 == minetest.get_item_group(cabinet_node.name, 'drawers') then
+	local cabinet_node = minetest.get_node_or_nil(self.object:get_pos())
+	if not cabinet_node
+		or 0 == minetest.get_item_group(cabinet_node.name, 'drawers')
+	then
 		self.object:remove()
 		return
 	end
@@ -87,8 +97,8 @@ function drawers.tag.on_activate(self, static_data_serialized, delta_seconds)
 			z = data.z,
 		}
 		self.drawer_count = data.c or 1
-		self.tag_id = data.i or ''
-		self.texture = data.t
+		self.tag_id = data.i or '1'
+		self.texture = data.t or 'blank.png'
 	else
 		-- being created for the first time, we fetch values
 		-- from mod cache
@@ -105,17 +115,18 @@ function drawers.tag.on_activate(self, static_data_serialized, delta_seconds)
 	-- only the underlying LuaEntitySAO
 	-- PLEASE contact me, if this is wrong
 	local id = self.tag_id
-	if '' == id then id = 1 end
+	if '' == id then id = '1' end
 	local pos_hash = minetest.hash_node_position(self.pos_cabinet)
 	if not drawers.tag.tags[pos_hash] then drawers.tag.tags[pos_hash] = {} end
-	drawers.tag.tags.[pos_hash][id] = self
+	drawers.tag.tags[pos_hash][id] = self
 
 	-- get meta
 	self.meta = minetest.get_meta(self.pos_cabinet)
 	self:migrate_cabinet_meta()
 
 	-- collisionbox
-	cabinet_node = minetest.get_node(self.pos_cabinet)
+	-- TODO verify that this is a duplication call
+	--cabinet_node = minetest.get_node(self.pos_cabinet)
 	local collisionbox
 	if 2 == self.drawer_count then
 		if 1 == cabinet_node.param2 or 3 == cabinet_node.param2 then
@@ -395,8 +406,7 @@ function drawers.tag.update_infotext(self)
 		item_description = S('Empty')
 	end
 
-	-- TODO: point to correct function
-	local infotext = drawers.gen_info_text(
+	local infotext = drawers.tag.gui.generate_info_text(
 		item_description, self.count, self.stack_max_factor, self.item_stack_max)
 
 	self.meta:set_string('entity_infotext' .. self.tag_id, infotext)
@@ -408,7 +418,7 @@ end -- drawers.tag.update_infotext
 
 function drawers.tag.update_texture(self)
 	-- TODO: point to correct function
-	self.texture = drawers.get_inv_image(self.item_name)
+	self.texture = drawers.tag.gui.get_image(self.item_name)
 	self.object:set_properties({
 		textures = { self.texture }
 	})
@@ -470,7 +480,7 @@ function drawers.tag.play_interact_sound(self)
 	})
 end -- drawers.tag.play_interact_sound
 
-function save_metadata(self)
+function drawers.tag.save_metadata(self)
 	-- TODO: discuss if it is worth using really short field names
 	-- in code we could use discriptive varables like so, but globaly defined so
 	-- other code that accesses cabinet node's metadata can use the same ones
