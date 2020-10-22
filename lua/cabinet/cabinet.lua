@@ -79,7 +79,7 @@ function drawers.cabinet.on_construct(pos)
 		meta:set_int('base_stack_max' .. id, base_stack_max)
 		meta:set_int('stack_max_factor' .. id, stack_max_factor)
 		infotext = drawers.tag.gui.generate_info_text(
-						S('Empty'), 0, stack_max_factor, base_stack_max))
+						S('Empty'), 0, stack_max_factor, base_stack_max)
 
 		meta:set_string('entity_infotext' .. id, infotext)
 
@@ -129,7 +129,7 @@ function drawers.cabinet.on_dig(pos, node, player)
 		while 0 < count_stacks do
 			pos_rand = drawers.cabinet.randomize_pos(pos)
 			if 1 == count_stacks then
-				minetest.add_item(pos_rand, name .. ' ' .. (count % stack_max)
+				minetest.add_item(pos_rand, name .. ' ' .. (count % stack_max))
 			else
 				minetest.add_item(pos_rand, name .. ' ' .. stack_max)
 			end
