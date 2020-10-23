@@ -8,25 +8,76 @@
 -- probably will contain most of what was in api.lua
 local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 
--- called by drop_overload which is called when upgrades are changed
-function drawers.cabinet.drop_stack(pos_cabinet, stack)
-	-- TODO: this looks like a debugging entry, see if we can remove it
-	-- print warning if dropping higher stack counts than allowed
-	if stack:get_count() > stack:get_stack_max() then
-		minetest.log('warning', '[drawers] Dropping item stack with higher count than allowed')
+-- return number of items allowed to put
+function drawers.cabinet.allow_upgrade_put(pos_cabinet, list_name, index, stack, player)
+	-- no need to continue if it's not upgrades list.
+	if 'upgrades' ~= list_name then
+		return 0
 	end
-	-- find a position containing air
-	local pos_drop = minetest.find_node_near(pos_cabinet, 1, { 'air' }, false)
-	-- if no pos found then drop on the top of the drawer
-	if not pos_drop then
-		-- TODO: check better, there may be something there, or is this standard
-		--		behaviour? I think tp-tubes do the same
-		pos_drop = table.copy(pos_cabinet)
-		pos_drop.y = pos_drop.y + 1
+	-- check player protection
+	local player_name = player:get_player_name()
+	if minetest.is_protected(pos_cabinet, player_name) then
+		minetest.record_protection_violation(pos_cabinet, player_name)
+		return 0
 	end
-	-- drop the item stack
-	minetest.item_drop(stack, nil, pos_drop)
-end -- drawers.tag.drop_stack
+	-- check that is actually an upgrade
+	if 1 > minetest.get_item_group(stack:get_name(), 'drawers_increment') then
+		return 0
+	end
+	-- don't allow stacking in upgrade inventory
+	local upgrade_inventory = minetest.get_meta(pos_cabinet):get_inventory()
+	local slot_count = upgrade_inventory:get_list('upgrades')[index]:get_count()
+	if 0 < slot_count then
+		return 0
+	end
+	-- allow just one into the empty slot
+	return 1
+end -- drawers.cabinet.allow_upgrade_put
+
+-- return number of items allowed to take
+function drawers.cabinet.allow_upgrade_take(pos_cabinet, list_name, index, stack, player)
+	-- no need to continue if it's not upgrades list.
+	if 'upgrades' ~= list_name then
+		return 0
+	end
+	-- check player protection
+	local player_name = player:get_player_name()
+	if minetest.is_protected(pos_cabinet, player_name) then
+		minetest.record_protection_violation(pos_cabinet, player_name)
+		return 0
+	end
+	-- permit to take any amount of anything out as there is a trick to get
+	-- any amount of anything in there
+	return stack:get_count()
+end -- drawers.cabinet.allow_upgrade_take
+
+-- Returns how much (count) of a stack can be inserted to a cabinet drawer.
+function drawers.cabinet.can_insert_stack(pos_cabinet, stack, tag_id)
+	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
+	if not handler then
+		-- this is unlikely to happen if called through node methods
+		return
+	end
+	return handler:how_many_can_insert(tag_id, stack)
+end -- drawers.cabinet.can_insert_stack
+
+-- Returns whether a stack can be (partially) inserted to any drawer of a cabinet.
+function drawers.cabinet.can_insert_stack_from_tube(pos_cabinet, node, stack, direction)
+	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
+	if not handler then
+		-- this is unlikely to happen if called through node methods
+		return
+	end
+	local id = handler.drawer_count
+	repeat
+		if 0 < handler:how_many_can_insert(id, stack) then
+			return true
+		end
+		id = id - 1
+	until 0 == id
+
+	return false
+end -- drawers.cabinet.can_insert_stack_from_tube
 
 -- is called when upgrades are changed
 function drawers.cabinet.drop_overload(pos_cabinet)
@@ -64,69 +115,77 @@ function drawers.cabinet.drop_overload(pos_cabinet)
 	handler:write_meta()
 end -- drawers.cabinet.drop_overload
 
-function drawers.cabinet.update_upgrades(pos_cabinet, list_name)
-	-- only do anything if adding to upgrades
-	if 'upgrades' ~= list_name then
+-- called by drop_overload which is called when upgrades are changed
+function drawers.cabinet.drop_stack(pos_cabinet, stack)
+	-- TODO: this looks like a debugging entry, see if we can remove it
+	-- print warning if dropping higher stack counts than allowed
+	if stack:get_count() > stack:get_stack_max() then
+		minetest.log('warning', '[drawers] Dropping item stack with higher count than allowed')
+	end
+	-- find a position containing air
+	local pos_drop = minetest.find_node_near(pos_cabinet, 1, { 'air' }, false)
+	-- if no pos found then drop on the top of the drawer
+	if not pos_drop then
+		-- TODO: check better, there may be something there, or is this standard
+		--		behaviour? I think tp-tubes do the same
+		pos_drop = table.copy(pos_cabinet)
+		pos_drop.y = pos_drop.y + 1
+	end
+	-- drop the item stack
+	minetest.item_drop(stack, nil, pos_drop)
+end -- drawers.cabinet.drop_stack
+
+-- TODO: figure out what needs this or if we can drop it
+-- Returns the content of a cabinet's drawer.
+function drawers.cabinet.get_content(pos, tag_id)
+	local meta = core.get_meta(pos)
+	return {
+		count = meta:get_int('count' .. tag_id),
+		name = meta:get_string('name' .. tag_id),
+		max_count = meta:get_int('max_count' .. tag_id),
+	}
+end -- drawers.cabinet.get_content
+
+-- Inserts an incoming stack into a specific drawer of a cabinet.
+function drawers.cabinet.insert_object(pos_cabinet, stack, tag_id)
+	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
+	if not handler then
+		-- this is unlikely to happen
 		return
 	end
+	return handler:try_insert_stack(tag_id, stack, true)
+end -- drawers.cabinet.insert_object
 
+-- Inserts an incoming stack into a cabinet and uses all drawers
+function drawers.cabinet.insert_object_from_tube(pos_cabinet, node, stack, direction)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen
 		return
 	end
 
-	-- storage percent with all upgrades
-	local storage_percent = 100
-
-	-- get info of all upgrades
-	local inventory = handler.meta:get_inventory()
-	local list = inventory:get_list('upgrades')
-	local name, item_def, add_to_percent
-	for _, stack in ipairs(list) do
-		name = stack:get_name()
-		item_def = minetest.registered_items[name]
-		add_to_percent = item_def.groups.drawer_upgrade or 0
-		storage_percent = storage_percent + add_to_percent
-	end
-
-	local node_def = minetest.registered_nodes[handler.cabinet_node.name]
-	-- default number of slots stack
-	local stack_max_factor = node_def.drawers_stack_max_factor
-	-- i.e.: 150% / 100 => 1.50
-	stack_max_factor = math.floor(stack_max_factor * (storage_percent * 0.01))
-	-- calculate stack_max factor for a single drawer
-	stack_max_factor = math.floor(stack_max_factor / handler.drawer_count)
-
-	handler:set_stack_max_factor(stack_max_factor)
-
-	drawers.cabinet.drop_overload(pos_cabinet)
-
-	-- force tags to update
-	local tags = drawers.tag.map.tags_for(pos_cabinet)
-	if not tags then
-		-- they should exist! create them.
-		drawers.tag.map.spawn_for(pos_cabinet)
-		return
-	end
-
-	local id = #tags
+	-- first try to insert in the correct drawer (if there are already items)
+	local leftover = stack
+	local item_name = stack:get_name()
+	local id = handler.drawer_count
 	repeat
-		tags[id]:update_infotext(handler:infotext_for(id))
+		if item_name == handler:item_name_for(id) then
+			leftover = handler:try_insert_stack(id, leftover, true)
+		end
 		id = id - 1
 	until 0 == id
 
-end -- drawers.cabinet.update_upgrades
-
-function drawers.cabinet.randomize_pos(pos)
-	local pos_rand = table.copy(pos)
-	local x = math.random(-50, 50) * 0.01
-	local z = math.random(-50, 50) * 0.01
-	pos_rand.x = pos_rand.x + x
-	pos_rand.y = pos_rand.y + 0.25
-	pos_rand.z = pos_rand.z + z
-	return pos_rand
-end -- drawers.cabinet.randomize_pos-- construct drawer
+	-- if there's still something left, also use other drawers
+	if 0 < leftover:get_count() then
+		id = handler.drawer_count
+		repeat
+			leftover = handler:try_insert_stack(id, leftover, true)
+			id = id - 1
+		until 0 == id or 0 >= leftover:get_count()
+	end
+-- TODO: make sure tags are updated
+	return leftover
+end -- drawers.cabinet.insert_object_from_tube
 
 function drawers.cabinet.on_construct(pos_cabinet)
 	local node = minetest.get_node(pos_cabinet)
@@ -235,128 +294,15 @@ function drawers.cabinet.on_dig(pos_cabinet, node, player)
 	minetest.node_dig(pos_cabinet, node, player)
 end -- drawers.cabinet.on_dig
 
--- return number of items allowed to put
-function drawers.cabinet.allow_upgrade_put(pos_cabinet, list_name, index, stack, player)
-	-- no need to continue if it's not upgrades list.
-	if 'upgrades' ~= list_name then
-		return 0
-	end
-	-- check player protection
-	local player_name = player:get_player_name()
-	if minetest.is_protected(pos_cabinet, player_name) then
-		minetest.record_protection_violation(pos_cabinet, player_name)
-		return 0
-	end
-	-- check that is actually an upgrade
-	if 1 > minetest.get_item_group(stack:get_name(), 'drawers_increment') then
-		return 0
-	end
-	-- don't allow stacking in upgrade inventory
-	local upgrade_inventory = minetest.get_meta(pos_cabinet):get_inventory()
-	local slot_count = upgrade_inventory:get_list('upgrades')[index]:get_count()
-	if 0 < slot_count then
-		return 0
-	end
-	-- allow just one into the empty slot
-	return 1
-end -- drawers.cabinet.allow_upgrade_put
-
--- return number of items allowed to take
-function drawers.cabinet.allow_upgrade_take(pos_cabinet, list_name, index, stack, player)
-	-- no need to continue if it's not upgrades list.
-	if 'upgrades' ~= list_name then
-		return 0
-	end
-	-- check player protection
-	local player_name = player:get_player_name()
-	if minetest.is_protected(pos_cabinet, player_name) then
-		minetest.record_protection_violation(pos_cabinet, player_name)
-		return 0
-	end
-	-- permit to take any amount of anything out as there is a trick to get
-	-- any amount of anything in there
-	return stack:get_count()
-end -- drawers.cabinet.allow_upgrade_take
-
---function drawers.cabinet.add_drawer_upgrade(pos, list_name, index, stack, player)
-function drawers.cabinet.add_drawer_upgrade(pos_cabinet, list_name)
--- TODO: when this works, remove these two functions and link directly
-	drawers.cabinet.update_upgrades(pos_cabinet, list_name)
-end -- drawers.cabinet.add_drawer_upgrade
-
---function drawers.cabinet.remove_drawer_upgrade(pos, list_name, index, stack, player)
-function drawers.cabinet.remove_drawer_upgrade(pos_cabinet, list_name)
-	drawers.cabinet.update_upgrades(pos_cabinet, list_name)
-end -- drawers.cabinet.remove_drawer_upgrade
-
--- Inserts an incoming stack into a specific drawer of a cabinet.
-function drawers.cabinet.insert_object(pos_cabinet, stack, tag_id)
-	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
-	if not handler then
-		-- this is unlikely to happen
-		return
-	end
-	return handler:try_insert_stack(tag_id, stack, true)
-end -- drawers.cabinet.insert_object
-
--- Inserts an incoming stack into a cabinet and uses all drawers
-function drawers.cabinet.insert_object_from_tube(pos_cabinet, node, stack, direction)
-	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
-	if not handler then
-		-- this is unlikely to happen
-		return
-	end
-
-	-- first try to insert in the correct drawer (if there are already items)
-	local leftover = stack
-	local item_name = stack:get_name()
-	local id = handler.drawer_count
-	repeat
-		if item_name == handler:item_name_for(id) then
-			leftover = handler:try_insert_stack(id, leftover, true)
-		end
-		id = id - 1
-	until 0 == id
-
-	-- if there's still something left, also use other drawers
-	if 0 < leftover:get_count() then
-		id = handler.drawer_count
-		repeat
-			leftover = handler:try_insert_stack(id, leftover, true)
-			id = id - 1
-		until 0 == id or 0 >= leftover:get_count()
-	end
--- TODO: make sure tags are updated
-	return leftover
-end -- drawers.cabinet.insert_object_from_tube
-
--- Returns how much (count) of a stack can be inserted to a cabinet drawer.
-function drawers.cabinet.can_insert_stack(pos_cabinet, stack, tag_id)
-	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
-	if not handler then
-		-- this is unlikely to happen if called through node methods
-		return
-	end
-	return handler:how_many_can_insert(tag_id, stack)
-end -- drawers.cabinet.can_insert_stack
-
--- Returns whether a stack can be (partially) inserted to any drawer of a cabinet.
-function drawers.cabinet.can_insert_stack_from_tube(pos_cabinet, node, stack, direction)
-	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
-	if not handler then
-		-- this is unlikely to happen if called through node methods
-		return
-	end
-	local id = handler.drawer_count
-	repeat
-		if 0 < handler:how_many_can_insert(id, stack) then
-			return true
-		end
-		id = id - 1
-	until 0 == id
-
-	return false
-end -- drawers.cabinet.can_insert_stack_from_tube
+function drawers.cabinet.randomize_pos(pos)
+	local pos_rand = table.copy(pos)
+	local x = math.random(-50, 50) * 0.01
+	local z = math.random(-50, 50) * 0.01
+	pos_rand.x = pos_rand.x + x
+	pos_rand.y = pos_rand.y + 0.25
+	pos_rand.z = pos_rand.z + z
+	return pos_rand
+end -- drawers.cabinet.randomize_pos
 
 function drawers.cabinet.take_item(pos_cabinet, stack)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
@@ -377,14 +323,57 @@ function drawers.cabinet.take_item(pos_cabinet, stack)
 	return ItemStack()
 end -- drawers.cabinet.take_item
 
--- TODO: figure out what needs this or if we can drop it
--- Returns the content of a cabinet's drawer.
-function drawers.cabinet.get_content(pos, tag_id)
-	local meta = core.get_meta(pos)
-	return {
-		count = meta:get_int('count' .. tag_id),
-		name = meta:get_string('name' .. tag_id),
-		max_count = meta:get_int('max_count' .. tag_id),
-	}
-end -- drawers.cabinet.get_content
+function drawers.cabinet.upgrade_update(pos_cabinet, list_name)
+	-- only do anything if adding to upgrades
+	if 'upgrades' ~= list_name then
+		return
+	end
+
+	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
+	if not handler then
+		-- this is unlikely to happen
+		return
+	end
+
+	-- storage percent with all upgrades
+	local storage_percent = 100
+
+	-- get info of all upgrades
+	local inventory = handler.meta:get_inventory()
+	local list = inventory:get_list('upgrades')
+	local name, item_def, add_to_percent
+	for _, stack in ipairs(list) do
+		name = stack:get_name()
+		item_def = minetest.registered_items[name]
+		add_to_percent = item_def.groups.drawer_upgrade or 0
+		storage_percent = storage_percent + add_to_percent
+	end
+
+	local node_def = minetest.registered_nodes[handler.cabinet_node.name]
+	-- default number of slots stack
+	local stack_max_factor = node_def.drawers_stack_max_factor
+	-- i.e.: 150% / 100 => 1.50
+	stack_max_factor = math.floor(stack_max_factor * (storage_percent * 0.01))
+	-- calculate stack_max factor for a single drawer
+	stack_max_factor = math.floor(stack_max_factor / handler.drawer_count)
+
+	handler:set_stack_max_factor(stack_max_factor)
+
+	drawers.cabinet.drop_overload(pos_cabinet)
+
+	-- force tags to update
+	local tags = drawers.tag.map.tags_for(pos_cabinet)
+	if not tags then
+		-- they should exist! create them.
+		drawers.tag.map.spawn_for(pos_cabinet)
+		return
+	end
+
+	local id = #tags
+	repeat
+		tags[id]:update_infotext(handler:infotext_for(id))
+		id = id - 1
+	until 0 == id
+
+end -- drawers.cabinet.upgrade_update
 

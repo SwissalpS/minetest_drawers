@@ -26,8 +26,8 @@ function drawers.cabinet.register(name, def)
 	def.on_construct = drawers.cabinet.on_construct
 	def.on_destruct = drawers.cabinet.on_destruct
 	def.on_dig = drawers.cabinet.on_dig
-	def.on_metadata_inventory_put = drawers.cabinet.add_drawer_upgrade
-	def.on_metadata_inventory_take = drawers.cabinet.remove_drawer_upgrade
+	def.on_metadata_inventory_put = drawers.cabinet.upgrade_update
+	def.on_metadata_inventory_take = drawers.cabinet.upgrade_update
 
 	if drawers.has_screwdriver then
 		def.on_rotate = def.on_rotate or screwdriver.disallow
