@@ -24,7 +24,7 @@ end -- drawers.tag.gui.generate_info_text
 function drawers.tag.gui.get_image(name)
 	local texture = 'blank.png'
 	local item_def = minetest.registered_items[name]
-	if not item_def then return end
+	if not item_def then return texture end
 
 	if item_def.inventory_image and 0 < #item_def.inventory_image then
 		texture = item_def.inventory_image
@@ -32,7 +32,7 @@ function drawers.tag.gui.get_image(name)
 		if not item_def.tiles then return texture end
 		local tiles = table.copy(item_def.tiles)
 
-		for k, v in pairs(tiles) do
+		for k, v in ipairs(tiles) do
 			if 'table' == type(v) then
 				tiles[k] = v.name
 			end
@@ -40,6 +40,7 @@ function drawers.tag.gui.get_image(name)
 
 		-- tiles: up, down, right, left, back, front
 		-- inventorycube: up, front, right
+		-- returns a string
 		if 2 >= #tiles then
 			texture = minetest.inventorycube(tiles[1], tiles[1], tiles[1])
 		elseif 5 >= #tiles then
