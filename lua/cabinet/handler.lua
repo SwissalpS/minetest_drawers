@@ -1,6 +1,22 @@
+--
+-- drawers/lua/cabinet/handler.lua
+--
+local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 local Base_Object = dofile(drawers.modpath .. '/lua/baseObject.lua')
-
 local Handler = Base_Object:extend()
+
+-- TODO: discuss if it is worth using really short field names
+-- in code we could use discriptive varables like so, but globaly defined so
+-- other code that accesses cabinet node's metadata can use the same ones
+-- would have to be cleaned up in migrate_cabinet_meta()
+local key_count = 'count'
+local key_infotext = 'infotext'
+local key_item_name = 'name'
+local key_item_stack_max = 'item_stack_max'
+local key_locked = 'locked'
+local key_max_count = 'max_count'
+local key_stack_max_factor = 'stackMaxFactor'
+local key_texture = 'texture'
 
 -- use this way:
 --	local handler = Handler(pos_cabinet)
@@ -28,6 +44,44 @@ function Handler:new(pos_cabinet)
 	self:read_meta()
 end -- new
 
+function Handler:count_for(tag_id)
+	return self.count[tonumber(tag_id)] or ''
+end
+
+function Handler:how_many_can_insert(tag_id, stack)
+	local stack_count = stack:get_count()
+	if '' == stack:get_name() or 0 >= stack_count then
+		return 0
+	end
+
+	local id = tonumber(tag_id)
+	-- don't allow unstackable stacks
+	-- if drawer is empty and item's max stack size is not 1
+	if '' == self.name[id] and 1 ~= stack:get_stack_max() then
+		-- TODO: limit this to valid stack size and also check if we have that
+		--	much space. Just because we are empty does not guarantee we can take
+		--	any amount.
+		return stack_count
+	end
+
+	-- if attempting to put something else in this drawer
+	if stack:get_name() ~= self.name[id] then
+		return 0
+	end
+
+	-- fits easily
+	if (self.count[id] + stack_count) <= self.max_count[id] then
+		return stack_count
+	end
+
+	-- return how many would still have space
+	return self.max_count[id] - self.count[id]
+end -- how_many_can_insert
+
+function Handler:infotext_for(tag_id)
+	return self.infotext[tonumber(tag_id)] or ''
+end
+
 function Handler:is_cabinet_missing()
 	-- check if there is a node at all there
 	self.cabinet_node = minetest.get_node_or_nil(self.pos_cabinet)
@@ -46,96 +100,6 @@ function Handler:is_cabinet_missing()
 	return false
 end -- is_cabinet_missing
 
-function Handler:read_meta()
-	if not self.is_valid then
-		return nil
-	end
-	-- TODO: discuss if it is worth using really short field names
-	-- in code we could use discriptive varables like so, but globaly defined so
-	-- other code that accesses cabinet node's metadata can use the same ones
-	-- would have to be cleaned up in migrate_cabinet_meta()
-	local key_locked = 'locked'
-	local key_count = 'count'
-	local key_item_name = 'name'
-	local key_max_count = 'max_count'
-	local key_item_stack_max = 'item_stack_max'
-	local key_stack_max_factor = 'stackMaxFactor'
-	local key_texture = 'texture'
-	local key_infotext = 'infotext'
-	self.locked = {}
-	self.count = {}
-	self.name = {}
-	self.max_count = {}
-	self.item_stack_max = {}
-	self.stack_max_factor = {}
-	-- TODO: see if we can do without caching these two and maybe more
-	self.texture = {}
-	self.infotext = {}
-	local index = self.drawer_count
-	local tag_id
-	repeat
-		tag_id = tostring(index)
-		self.locked[index] = self.meta:get_int(key_locked .. tag_id)
-		self.count[index] = self.meta:get_int(key_count .. tag_id)
-		self.name[index] = self.meta:get_string(key_item_name .. tag_id)
-		self.max_count[index] = self.meta:get_int(key_max_count .. tag_id)
-		self.item_stack_max[index] = self.meta:get_int(key_item_stack_max .. tag_id)
-		self.texture[index] = self.meta:get_string(key_texture .. tag_id)
-		if '' == self.texture[index] then
-			self.texture[index] = 'blank.png'
-		end
-		self.infotext[index] = self.meta:get_string(key_infotext .. tag_id)
-		index = index - 1
-	until 0 == index -- loop all drawers of this cabinet into object fields
-	self.stack_max_factor = self.meta:get_int(key_stack_max_factor)
-
-	return true
-end -- read_meta
-
-function Handler:write_meta()
-	if not self.is_valid then
-		return nil
-	end
-	-- TODO: discuss if it is worth using really short field names
-	-- in code we could use discriptive varables like so, but globaly defined so
-	-- other code that accesses cabinet node's metadata can use the same ones
-	-- would have to be cleaned up in migrate_cabinet_meta()
-	local key_locked = 'locked'
-	local key_count = 'count'
-	local key_item_name = 'name'
-	local key_max_count = 'max_count'
-	local key_item_stack_max = 'item_stack_max'
-	local key_stack_max_factor = 'stackMaxFactor'
-	local key_texture = 'texture'
-	local key_infotext = 'infotext'
-	local index = self.drawer_count
-	local tag_id
-	repeat
-		tag_id = tostring(index)
-		self.meta:set_int(key_locked .. tag_id, self.locked[index])
-		self.meta:set_int(key_count .. tag_id, self.count[index])
-		self.meta:set_string(key_item_name .. tag_id, self.name[index])
-		-- TODO: can we please not store this one, we already have the other
-		--		two factors that produce this value
-		self.meta:set_int(key_max_count .. tag_id, self.max_count[index])
-		self.meta:set_int(key_item_stack_max .. tag_id, self.item_stack_max[index])
-		self.meta:set_int(key_texture .. tag_id, self.texture[index])
-		self.meta:set_int(key_infotext .. tag_id, self.infotext[index])
-		index = index - 1
-	until 0 == index
-	self.meta:set_int(key_stack_max_factor, self.stack_max_factor)
-
-	return true
-end -- write_meta
-
-function Handler:count_for(tag_id)
-	return self.count[tonumber(tag_id)] or ''
-end
-
-function Handler:infotext_for(tag_id)
-	return self.infotext[tonumber(tag_id)] or ''
-end
-
 function Handler:item_name_for(tag_id)
 	return self.name[tonumber(tag_id)] or ''
 end
@@ -150,14 +114,6 @@ end
 
 function Handler:max_count_for(tag_id)
 	return self.max_count[tonumber(tag_id)] or 0
-end
-
-function Handler:stack_max_factor_for(tag_id)
-	return self.stack_max_factor or 0
-end
-
-function Handler:texture_for(tag_id)
-	return self.texture[tonumber(tag_id)] or 'blank.png'
 end
 
 -- called when player right clicks tag with or without something in hand,
@@ -207,42 +163,174 @@ function Handler:player_put(tag_id, player)
 		-- check if something was added
 		if leftover:get_count() < wielded_item:get_count() then
 			inventory_changed = true
+			item_name = wielded_item:get_name()
 		end
 		-- set the leftover as new wielded item for the player
 		player:set_wielded_item(leftover)
 	end
+	if keys.aux1 then
+		-- TODO: move this to a generalized method so later it can be done using
+		-- digiline or some other tool
+		-- lock the drawer to it's item
+		if 0 == self.locked[id] then
+			-- don't lock drawers that don't have an item assigned yet
+			if 0 < #item_name then
+				self.locked[id] = 1
+				self:write_meta()
+				minetest.chat_send_player(player_name,
+					S('Drawer assigned to @1', item_name))
+			end
+		end -- if not locked
+	end -- if keys.aux1
 	return inventory_changed
 end -- player_put
 
-function Handler:how_many_can_insert(tag_id, stack)
-	local stack_count = stack:get_count()
-	if '' == stack:get_name() or 0 >= stack_count then
-		return 0
+-- called when a player punches the entity to take items
+--function drawers.tag.handle_punch_take(self, player, time_from_last_punch,
+--										tool_capabilities, dir)
+function Handler:player_take(tag_id, player)
+	-- check permissions first
+	local player_name = player:get_player_name()
+	if minetest.is_protected(self.pos_cabinet, player_name) then
+		minetest.record_protection_violation(self.pos_cabinet, player_name)
+		return nil
 	end
 
+	local keys = player:get_player_control()
 	local id = tonumber(tag_id)
-	-- don't allow unstackable stacks
-	-- if drawer is empty and item's max stack size is not 1
-	if '' == self.name[id] and 1 ~= stack:get_stack_max() then
-		-- TODO: limit this to valid stack size and also check if we have that
-		--	much space. Just because we are empty does not guarantee we can take
-		--	any amount.
-		return stack_count
+	local item_name = self.name[id]
+	-- unlock if special key is held
+	if keys.aux1 then
+		if 1 == self.locked[id] then
+			self.locked[id] = 0
+			minetest.chat_send_player(player_name, S('Drawer unlocked'))
+			if 0 >= self.count[id] then
+				self.name[id] = ''
+				-- nothing to take, so
+				self:write_meta()
+				return false
+			end
+			self:write_meta()
+		end -- if locked at all
+	end -- if special pressed
+
+	-- fake player has no inventory, right? TODO: check that
+	local inv = player:get_inventory()
+	if not inv then return false end
+
+	-- if player is holding sneak, only one item
+	local stackwize = not keys.sneak
+
+	local checker_stack = ItemStack(item_name)
+	if stackwize then
+		checker_stack:set_count(checker_stack:get_stack_max())
+	end
+	-- what if he has space for half a stack, maybe we should give him that
+	-- turns out, that would need a loop through all slots in inventory gathering
+	-- all the slots for same item and get count of each... doable, but worth it?
+	if not inv:room_for_item('main', checker_stack) then
+		return false
 	end
 
-	-- if attempting to put something else in this drawer
-	if stack:get_name() ~= self.name[id] then
-		return 0
+	local stack
+	if stackwize then
+		stack = self:take_stack(tag_id)
+	else
+		stack = self:take_items(tag_id, 1)
 	end
 
-	-- fits easily
-	if (self.count[id] + stack_count) <= self.max_count[id] then
-		return stack_count
+	if stack then
+		-- add removed stack to player's inventory
+		inv:add_item('main', stack)
+		-- play the interact sound
+		return true
+	end
+end -- player_take
+
+function Handler:read_meta()
+	if not self.is_valid then
+		--return nil
+	end
+	self.locked = {}
+	self.count = {}
+	self.name = {}
+	self.max_count = {}
+	self.item_stack_max = {}
+	self.stack_max_factor = {}
+	-- TODO: see if we can do without caching these two and maybe more
+	self.texture = {}
+	self.infotext = {}
+	local index = self.drawer_count
+	local tag_id
+	repeat
+		tag_id = tostring(index)
+		self.locked[index] = self.meta:get_int(key_locked .. tag_id)
+		self.count[index] = self.meta:get_int(key_count .. tag_id)
+		self.name[index] = self.meta:get_string(key_item_name .. tag_id)
+		self.max_count[index] = self.meta:get_int(key_max_count .. tag_id)
+		self.item_stack_max[index] = self.meta:get_int(key_item_stack_max .. tag_id)
+		self.texture[index] = self.meta:get_string(key_texture .. tag_id)
+		if '' == self.texture[index] then
+			self.texture[index] = 'blank.png'
+		end
+		self.infotext[index] = self.meta:get_string(key_infotext .. tag_id)
+		index = index - 1
+	until 0 == index -- loop all drawers of this cabinet into object fields
+	self.stack_max_factor = self.meta:get_int(key_stack_max_factor)
+
+	return true
+end -- read_meta
+
+function Handler:set_stack_max_factor(stack_max_factor)
+
+	self.stack_max_factor = stack_max_factor
+
+	-- TODO: test if we need to copy this or if this is implicitly a copy
+	local id = self.drawer_count
+	repeat
+		self.max_count[id] = self.stack_max_factor * self.item_stack_max[id]
+		self:update_infotext(id)
+		id = id - 1
+	until 0 == id
+	self:write_meta()
+
+end -- set_stack_max_factor
+
+function Handler:stack_max_factor_for(tag_id)
+	return self.stack_max_factor or 0
+end
+
+function Handler:take_items(tag_id, take_count)
+	local id = tonumber(tag_id)
+	if 0 >= self.count[id] then
+		return nil
 	end
 
-	-- return how many would still have space
-	return self.max_count[id] - self.count[id]
-end -- how_many_can_insert
+	if take_count > self.count[id] then
+		take_count = self.count[id]
+	end
+
+	local item_name = self.name[id]
+	local stack = ItemStack(item_name)
+	stack:set_count(take_count)
+
+	-- update everything
+	self.count[id] = self.count[id] - take_count
+	self:update_infotext(tag_id)
+	self.texture[id] = drawers.tag.gui.get_image(item_name)
+	self:write_meta()
+
+	-- return the stack that was removed from the drawer
+	return stack
+end -- take_items
+
+function Handler:take_stack(tag_id)
+	return self:take_items(ItemStack(self:item_name_for(tag_id)):get_stack_max())
+end -- take_stack
+
+function Handler:texture_for(tag_id)
+	return self.texture[tonumber(tag_id)] or 'blank.png'
+end
 
 -- return what did not fit
 function Handler:try_insert_stack(tag_id, stack, insert_all)
@@ -292,7 +380,7 @@ function Handler:update_infotext(tag_id)
 		item_description = item_def.description
 	end
 
-	if 0 >= self.count then
+	if 0 >= self.count[id] then
 		self.count[id] = 0
 		item_description = S('Empty')
 		if 0 == self.locked[id] then
@@ -308,112 +396,34 @@ function Handler:update_infotext(tag_id)
 		self.item_stack_max[id])
 end -- update_infotext
 
--- called when a player punches the entity to take items
---function drawers.tag.handle_punch_take(self, player, time_from_last_punch,
---										tool_capabilities, dir)
-function Handler:player_take(tag_id, player)
-	-- check permissions first
-	local player_name = player:get_player_name()
-	if minetest.is_protected(self.pos_cabinet, player_name) then
-		minetest.record_protection_violation(self.pos_cabinet, player_name)
+function Handler:write_meta()
+	if not self.is_valid then
 		return nil
 	end
-
-	local keys = player:get_player_control()
-	local id = tonumber(tag_id)
-	local item_name = self.name[id]
-	-- toggle lock if special key is held
-	if keys.aux1 then
-		if 0 == self.locked[id] then
-			-- don't lock drawers that don't have an item assigned yet
-			-- TODO: allow to do so with first put
-			if '' == item_name then
-				return false
-			else
-				self.locked[id] = 1
-			end
-		else
-			self.locked[id] = 0
-		end
-		self:write_meta()
-		return false
-	end
-
-	-- fake player has no inventory, right? TODO: check that
-	local inv = player:get_inventory()
-	if not inv then return false end
-
-	-- if player is holding sneak, only one item
-	local stackwize = not keys.sneak
-
-	local checker_stack = ItemStack(item_name)
-	if stackwize then
-		checker_stack:set_count(checker_stack:get_stack_max())
-	end
-	-- what if he has space for half a stack, maybe we should give him that
-	-- turns out, that would need a loop through all slots in inventory gathering
-	-- all the slots for same item and get count of each... doable, but worth it?
-	if not inv:room_for_item('main', checker_stack) then
-		return false
-	end
-
-	local stack
-	if stackwize then
-		stack = self:take_stack(tag_id)
-	else
-		stack = self:take_items(tag_id, 1)
-	end
-
-	if stack then
-		-- add removed stack to player's inventory
-		inv:add_item('main', stack)
-		-- play the interact sound
-		return true
-	end
-end -- punch_take
-
-function Handler:take_items(tag_id, take_count)
-	local id = tonumber(tag_id)
-	if 0 >= self.count[id] then
-		return nil
-	end
-
-	if take_count > self.count[id] then
-		take_count = self.count[id]
-	end
-
-	local item_name = self.name[id]
-	local stack = ItemStack(item_name)
-	stack:set_count(take_count)
-
-	-- update everything
-	self.count[id] = self.count[id] - take_count
-	self:update_infotext(tag_id)
-	self.texture[id] = drawers.tag.gui.get_image(item_name)
-	self:write_meta()
-
-	-- return the stack that was removed from the drawer
-	return stack
-end -- take_items
-
-function Handler:take_stack(tag_id)
-	return self:take_items(ItemStack(self:item_name_for(tag_id)):get_stack_max())
-end -- take_stack
-
-function Handler:set_stack_max_factor(stack_max_factor)
-
-	self.stack_max_factor = stack_max_factor
-
-	-- TODO: test if we need to copy this or if this is implicitly a copy
-	local id = self.drawer_count
+	local index = self.drawer_count
+	local tag_id
 	repeat
-		self.max_count[id] = self.stack_max_factor * self.item_stack_max[id]
-		self:update_infotext(id)
-		id = id - 1
-	until 0 == id
-	self:write_meta()
+		tag_id = tostring(index)
+		self.meta:set_int(key_locked .. tag_id, self.locked[index])
+		self.meta:set_int(key_count .. tag_id, self.count[index])
+		self.meta:set_string(key_item_name .. tag_id, self.name[index])
+		-- TODO: can we please not store this one, we already have the other
+		--		two factors that produce this value
+		self.meta:set_int(key_max_count .. tag_id, self.max_count[index])
+		self.meta:set_int(key_item_stack_max .. tag_id, self.item_stack_max[index])
+		self.meta:set_string(key_texture .. tag_id, self.texture[index])
+		self.meta:set_string(key_infotext .. tag_id, self.infotext[index])
+		index = index - 1
+	until 0 == index
+	self.meta:set_int(key_stack_max_factor, self.stack_max_factor)
 
-end -- set_stack_max_factor
+	return true
+end -- write_meta
+
+-- ====================================================================
+-- ====================================================================
+-- ====================================================================
+-- ====================================================================
 
 drawers.cabinet.Handler = Handler
 -- runtime cache of handler object references
