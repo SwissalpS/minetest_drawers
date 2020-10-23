@@ -128,8 +128,8 @@ function drawers.cabinet.randomize_pos(pos)
 	return pos_rand
 end -- drawers.cabinet.randomize_pos-- construct drawer
 
-function drawers.cabinet.on_construct(pos)
-	local node = minetest.get_node(pos)
+function drawers.cabinet.on_construct(pos_cabinet)
+	local node = minetest.get_node(pos_cabinet)
 	local node_def = minetest.registered_nodes[node.name]
 	local drawer_count = node_def.groups.drawers
 
@@ -139,7 +139,7 @@ function drawers.cabinet.on_construct(pos)
 	local max_count = base_stack_max * stack_max_factor
 
 	-- meta
-	local meta = core.get_meta(pos)
+	local meta = core.get_meta(pos_cabinet)
 
 	local id = drawer_count
 	local infotext
@@ -165,7 +165,7 @@ function drawers.cabinet.on_construct(pos)
 	meta:set_string('formspec', drawers.cabinet.gui.formspec)
 
 	-- spawn all tag entities
-	drawers.tag.map.spawn_for(pos)
+	drawers.tag.map.spawn_for(pos_cabinet)
 end -- drawers.cabinet.on_construct
 
 -- destruct drawer
@@ -235,8 +235,8 @@ function drawers.cabinet.on_dig(pos_cabinet, node, player)
 	minetest.node_dig(pos_cabinet, node, player)
 end -- drawers.cabinet.on_dig
 
--- return number of items allowed to put/take
-function drawers.cabinet.allow_upgrade_change(pos_cabinet, list_name, index, stack, player)
+-- return number of items allowed to put
+function drawers.cabinet.allow_upgrade_put(pos_cabinet, list_name, index, stack, player)
 	-- no need to continue if it's not upgrades list.
 	if 'upgrades' ~= list_name then
 		return 0
@@ -247,18 +247,36 @@ function drawers.cabinet.allow_upgrade_change(pos_cabinet, list_name, index, sta
 		minetest.record_protection_violation(pos_cabinet, player_name)
 		return 0
 	end
-
-	-- TODO: test if this works as expected with stackable upgrades
---	if 1 < stack:get_count() then
---		return 0
---	end
-
+	-- check that is actually an upgrade
 	if 1 > minetest.get_item_group(stack:get_name(), 'drawers_increment') then
 		return 0
 	end
-	-- TODO: shouldn't we be checking for space here?
+	-- don't allow stacking in upgrade inventory
+	local upgrade_inventory = minetest.get_meta(pos_cabinet):get_inventory()
+	local slot_count = upgrade_inventory:get_list('upgrades')[index]:get_count()
+	if 0 < slot_count then
+		return 0
+	end
+	-- allow just one into the empty slot
 	return 1
-end -- drawers.cabinet.allow_upgrade_change
+end -- drawers.cabinet.allow_upgrade_put
+
+-- return number of items allowed to take
+function drawers.cabinet.allow_upgrade_take(pos_cabinet, list_name, index, stack, player)
+	-- no need to continue if it's not upgrades list.
+	if 'upgrades' ~= list_name then
+		return 0
+	end
+	-- check player protection
+	local player_name = player:get_player_name()
+	if minetest.is_protected(pos_cabinet, player_name) then
+		minetest.record_protection_violation(pos_cabinet, player_name)
+		return 0
+	end
+	-- permit to take any amount of anything out as there is a trick to get
+	-- any amount of anything in there
+	return stack:get_count()
+end -- drawers.cabinet.allow_upgrade_take
 
 --function drawers.cabinet.add_drawer_upgrade(pos, list_name, index, stack, player)
 function drawers.cabinet.add_drawer_upgrade(pos_cabinet, list_name)

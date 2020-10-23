@@ -20,8 +20,9 @@ function drawers.cabinet.register(name, def)
 	def.selection_box = { type = 'fixed', fixed = dcab.gui.node_box_simple }
 
 	-- events
-	def.allow_metadata_inventory_put = drawers.cabinet.allow_upgrade_change
-	def.allow_metadata_inventory_take = drawers.cabinet.allow_upgrade_change
+	def.allow_metadata_inventory_move = function() return 0 end
+	def.allow_metadata_inventory_put = drawers.cabinet.allow_upgrade_put
+	def.allow_metadata_inventory_take = drawers.cabinet.allow_upgrade_take
 	def.on_construct = drawers.cabinet.on_construct
 	def.on_destruct = drawers.cabinet.on_destruct
 	def.on_dig = drawers.cabinet.on_dig
@@ -84,7 +85,6 @@ function drawers.cabinet.register(name, def)
 		def2.tiles4 = nil
 
 		name_full = name .. '2'
-		pd(name_full) pd(def2)
 		minetest.register_node(name_full, def2)
 		if drawers.has_mesecons_mvps then
 			mesecon.register_mvps_stopper(name_full)
