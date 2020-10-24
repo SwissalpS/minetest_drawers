@@ -175,7 +175,7 @@ function Handler:player_put(tag_id, player)
 	if changed then
 		self:update_visibles(id)
 	end
-	return changed
+	return changed, leftover
 end -- player_put
 
 -- called when a player punches the entity to take items
@@ -440,7 +440,11 @@ function Handler:update_visibles(tag_id)
 		locked_to)
 
 	local tag = drawers.tag.map.tag_for(self.pos_cabinet, id)
-	tag:update(self.infotext[id], self.texture[id])
+	if tag then
+		tag:update(self.infotext[id], self.texture[id])
+	else
+print('failed to get tag')
+	end
 end -- update_visibles
 
 function Handler:write_meta()

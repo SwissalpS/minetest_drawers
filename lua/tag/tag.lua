@@ -46,7 +46,7 @@ function drawers.tag:get_serialized_static_data()
 end
 
 -- called when a player punches the entity to take items
---function drawers.tag.handle_punch_take(self, player, time_from_last_punch,
+--function drawers.tag.handle_punch_take(player, time_from_last_punch,
 --										tool_capabilities, dir)
 function drawers.tag:handle_punch_take(player)
 	-- get handler. Will also check if cabinet node exists and remove tags if not.
@@ -60,10 +60,6 @@ function drawers.tag:handle_punch_take(player)
 		-- we keep this as part of object for sound direction and possibly later
 		-- adding sounds per kind of item -- in years when sounds are not so expensive
 		self:play_interact_sound()
-		self.object:set_properties({
-			infotext = handler:infotext_for(self.tag_id) .. '\n\n\n\n\n',
-			textures = { handler:texture_for(self.tag_id) },
-		})
 	end
 end -- handle_punch_take
 
@@ -76,16 +72,13 @@ print('tag:handle_use_put')
 	if not handler then
 		return
 	end
-	local changed = handler:player_put(self.tag_id, player)
+	local changed, leftover = handler:player_put(self.tag_id, player)
 	if changed then
 		-- we keep this as part of object for sound direction and possibly later
 		-- adding sounds per kind of item -- in years when sounds are not so expensive
 		self:play_interact_sound()
-		self.object:set_properties({
-			infotext = handler:infotext_for(self.tag_id) .. '\n\n\n\n\n',
-			textures = { handler:texture_for(self.tag_id) },
-		})
 	end
+	return leftover
 end -- drawers.tag.handle_use_put
 
 -- this is called when entity is activated for first time or reactivated.
@@ -154,6 +147,9 @@ function drawers.tag:on_activate(static_data_serialized, delta_seconds)
 
 	-- make entity undestroyable
 	self.object:set_armor_groups({ immortal = 1 })
+
+	-- register in cache
+	drawers.tag.map.cache_tag(self)
 end -- drawers.tag.on_activate
 
 function drawers.tag:play_interact_sound()
@@ -164,6 +160,7 @@ function drawers.tag:play_interact_sound()
 	})
 end -- drawers.tag:play_interact_sound
 
+-- used in general to update infotext and texture
 function drawers.tag:update(new_infotext, new_texture)
 	self.object:set_properties({
 		infotext = new_infotext,-- .. '\n\n\n\n\n',
@@ -171,6 +168,7 @@ function drawers.tag:update(new_infotext, new_texture)
 	})
 end -- drawers.tag:update
 
+-- used by cabinet when upgrades changed
 function drawers.tag:update_infotext(new_infotext)
 	self.object:set_properties({
 		infotext = new_infotext-- .. '\n\n\n\n\n',

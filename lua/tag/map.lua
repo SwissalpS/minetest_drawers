@@ -119,6 +119,16 @@ function drawers.tag.map.spawn_for(pos_cabinet)
 	end -- switch cabinet type
 end -- drawers.tag.map.spawn_for
 
+function drawers.tag.map.cache_tag(tag)
+	local pos_hash = minetest.hash_node_position(tag.pos_cabinet)
+	if not drawers.tag.tags[pos_hash] then
+		drawers.tag.tags[pos_hash] = {}
+	end
+	local id = tonumber(tag.tag_id)
+	if 0 == id then id = 1 end
+	drawers.tag.tags[pos_hash][id] = tag
+end
+
 -- remove tags for cabinet at position pos
 function drawers.tag.map.remove_for(pos_cabinet)
 	local objects = minetest.get_objects_inside_radius(pos_cabinet, 0.56)

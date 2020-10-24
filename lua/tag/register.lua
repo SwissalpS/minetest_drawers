@@ -26,6 +26,7 @@ local entity_def = {
 	on_rightclick = drawers.tag.handle_use_put,
 	-- to take items out
 	on_punch = drawers.tag.handle_punch_take,
+	update = drawers.tag.update,
 	-- custom field, was renamed
 	update_infotext = drawers.tag.update_infotext,
 	-- called whenever items are put in or taken out manually
