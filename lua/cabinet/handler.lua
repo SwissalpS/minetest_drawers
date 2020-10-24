@@ -15,32 +15,24 @@ local key_item_name = 'name'
 local key_item_stack_max = 'item_stack_max'
 local key_locked = 'locked'
 local key_max_count = 'max_count'
-local key_stack_max_factor = 'stackMaxFactor'
+local key_stack_max_factor = 'stack_max_factor'
 local key_texture = 'texture'
 
 -- use this way:
 --	local handler = Handler(pos_cabinet)
 function Handler:new(pos_cabinet)
 	self.is_valid = false
-
-	-- check if there is a node at all there
-	self.cabinet_node = minetest.get_node_or_nil(pos_cabinet)
-	if not self.cabinet_node then
+	self.pos_cabinet = table.copy(pos_cabinet)
+	-- so all we check is that this instance was instantiated via handler_for
+	-- without skipping node check
+	if self:is_cabinet_missing() then
 		return nil
 	end
-
-	-- check that it is a drawers compatible node
-	-- TODO: we may need to do better check here
-	local node_def = minetest.registered_nodes[self.cabinet_node.name]
-	self.drawer_count = node_def.groups.drawers
-	if not (0 < self.drawer_count) then
-		return nil
-	end
-
 	-- get meta
 	self.meta = minetest.get_meta(pos_cabinet)
 	self.pos_cabinet = table.copy(pos_cabinet)
 	self.is_valid = true
+	-- read meta and initialize cached values to defaults if need be
 	self:read_meta()
 end -- new
 
@@ -53,9 +45,8 @@ function Handler:how_many_can_insert(tag_id, stack)
 	if '' == stack:get_name() or 0 >= stack_count then
 		return 0
 	end
-
-	local id = tonumber(tag_id)
 	-- don't allow unstackable stacks
+	local id = tonumber(tag_id)
 	-- if drawer is empty and item's max stack size is not 1
 	if '' == self.name[id] and 1 ~= stack:get_stack_max() then
 		-- TODO: limit this to valid stack size and also check if we have that
@@ -63,17 +54,14 @@ function Handler:how_many_can_insert(tag_id, stack)
 		--	any amount.
 		return stack_count
 	end
-
 	-- if attempting to put something else in this drawer
 	if stack:get_name() ~= self.name[id] then
 		return 0
 	end
-
 	-- fits easily
 	if (self.count[id] + stack_count) <= self.max_count[id] then
 		return stack_count
 	end
-
 	-- return how many would still have space
 	return self.max_count[id] - self.count[id]
 end -- how_many_can_insert
@@ -88,7 +76,6 @@ function Handler:is_cabinet_missing()
 	if not self.cabinet_node then
 		return true
 	end
-
 	-- check that it is a drawers compatible node
 	-- TODO: we may need to do better check here
 	local node_def = minetest.registered_nodes[self.cabinet_node.name]
@@ -96,7 +83,6 @@ function Handler:is_cabinet_missing()
 	if not (0 < self.drawer_count) then
 		return true
 	end
-
 	return false
 end -- is_cabinet_missing
 
@@ -119,6 +105,9 @@ end
 -- called when player right clicks tag with or without something in hand,
 -- to put items in
 function Handler:player_put(tag_id, player)
+	if player.is_fake_player then
+		return nil
+	end
 	-- check permissions first
 	local player_name = player:get_player_name()
 	if minetest.is_protected(self.pos_cabinet, player_name) then
@@ -130,6 +119,7 @@ function Handler:player_put(tag_id, player)
 	local inventory_changed = false
 	local item_name = self:item_name_for(tag_id)
 	local keys = player:get_player_control()
+	local id = tonumber(tag_id)
 	local wielded_item = player:get_wielded_item()
 	-- When the player uses the drawer with their bare hand all
 	-- stacks from the inventory will be added to the drawer.
@@ -189,6 +179,9 @@ end -- player_put
 --function drawers.tag.handle_punch_take(self, player, time_from_last_punch,
 --										tool_capabilities, dir)
 function Handler:player_take(tag_id, player)
+	if player.is_fake_player then
+		return nil
+	end
 	-- check permissions first
 	local player_name = player:get_player_name()
 	if minetest.is_protected(self.pos_cabinet, player_name) then
@@ -206,6 +199,7 @@ function Handler:player_take(tag_id, player)
 			minetest.chat_send_player(player_name, S('Drawer unlocked'))
 			if 0 >= self.count[id] then
 				self.name[id] = ''
+				self.texture[id] = 'blank.png'
 				-- nothing to take, so
 				self:write_meta()
 				return false
@@ -249,35 +243,59 @@ end -- player_take
 
 function Handler:read_meta()
 	if not self.is_valid then
+		-- TODO: do we need this check anymore?
 		--return nil
 	end
-	self.locked = {}
+	-- reset all cache tables
 	self.count = {}
-	self.name = {}
-	self.max_count = {}
 	self.item_stack_max = {}
-	self.stack_max_factor = {}
+	self.locked = {}
+	self.max_count = {}
+	self.name = {}
+	self.stack_max_factor = self.meta:get_int(key_stack_max_factor)
 	-- TODO: see if we can do without caching these two and maybe more
-	self.texture = {}
 	self.infotext = {}
+	self.texture = {}
+	local needs_init = 0 == self.stack_max_factor
 	local index = self.drawer_count
 	local tag_id
-	repeat
-		tag_id = tostring(index)
-		self.locked[index] = self.meta:get_int(key_locked .. tag_id)
-		self.count[index] = self.meta:get_int(key_count .. tag_id)
-		self.name[index] = self.meta:get_string(key_item_name .. tag_id)
-		self.max_count[index] = self.meta:get_int(key_max_count .. tag_id)
-		self.item_stack_max[index] = self.meta:get_int(key_item_stack_max .. tag_id)
-		self.texture[index] = self.meta:get_string(key_texture .. tag_id)
-		if '' == self.texture[index] then
+	if needs_init then
+		-- must be initialized, probably drawer has only just been placed
+		local node_def = minetest.registered_nodes[self.cabinet_node.name]
+		local base_stack_max = minetest.nodedef_default.stack_max or 99
+		self.stack_max_factor = node_def.drawers_stack_max_factor or 24 -- 3x8
+		self.stack_max_factor = math.floor(self.stack_max_factor / self.drawer_count)
+		local max_count = base_stack_max * self.stack_max_factor
+		repeat
+			self.count[index] = 0
+			self.infotext[index] = drawers.tag.gui.generate_info_text(
+							S('Empty'), 0, self.stack_max_factor, base_stack_max)
+			self.item_stack_max[index] = base_stack_max
+			self.locked[index] = 0
+			self.max_count[index] = max_count
+			self.name[index] = ''
 			self.texture[index] = 'blank.png'
-		end
-		self.infotext[index] = self.meta:get_string(key_infotext .. tag_id)
-		index = index - 1
-	until 0 == index -- loop all drawers of this cabinet into object fields
-	self.stack_max_factor = self.meta:get_int(key_stack_max_factor)
-
+			index = index - 1
+		until 0 == index
+		-- probably good idea to save meta at this point
+		self:write_meta()
+	else
+		-- just read
+		repeat
+			tag_id = tostring(index)
+			self.count[index] = self.meta:get_int(key_count .. tag_id)
+			self.infotext[index] = self.meta:get_string(key_infotext .. tag_id)
+			self.item_stack_max[index] = self.meta:get_int(key_item_stack_max .. tag_id)
+			self.locked[index] = self.meta:get_int(key_locked .. tag_id)
+			self.max_count[index] = self.meta:get_int(key_max_count .. tag_id)
+			self.name[index] = self.meta:get_string(key_item_name .. tag_id)
+			self.texture[index] = self.meta:get_string(key_texture .. tag_id)
+			if '' == self.texture[index] then
+				self.texture[index] = 'blank.png'
+			end
+			index = index - 1
+		until 0 == index -- loop all drawers of this cabinet into object fields
+	end -- if needs init or just read
 	return true
 end -- read_meta
 
@@ -325,7 +343,7 @@ function Handler:take_items(tag_id, take_count)
 end -- take_items
 
 function Handler:take_stack(tag_id)
-	return self:take_items(ItemStack(self:item_name_for(tag_id)):get_stack_max())
+	return self:take_items(tag_id, ItemStack(self:item_name_for(tag_id)):get_stack_max())
 end -- take_stack
 
 function Handler:texture_for(tag_id)
@@ -350,7 +368,7 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 	local id = tonumber(tag_id)
 
 	-- in case the drawer was empty, initialize count, itemName, maxCount
-	if '' == self.item_name_for(tag_id) then
+	if '' == self:item_name_for(tag_id) then
 		self.count[id] = 0
 		self.name[id] = itemstack:get_name()
 		self.max_count[id] = itemstack:get_stack_max() * self.stack_max_factor
@@ -404,15 +422,15 @@ function Handler:write_meta()
 	local tag_id
 	repeat
 		tag_id = tostring(index)
-		self.meta:set_int(key_locked .. tag_id, self.locked[index])
 		self.meta:set_int(key_count .. tag_id, self.count[index])
+		self.meta:set_string(key_infotext .. tag_id, self.infotext[index])
+		self.meta:set_int(key_item_stack_max .. tag_id, self.item_stack_max[index])
 		self.meta:set_string(key_item_name .. tag_id, self.name[index])
+		self.meta:set_int(key_locked .. tag_id, self.locked[index])
 		-- TODO: can we please not store this one, we already have the other
 		--		two factors that produce this value
 		self.meta:set_int(key_max_count .. tag_id, self.max_count[index])
-		self.meta:set_int(key_item_stack_max .. tag_id, self.item_stack_max[index])
 		self.meta:set_string(key_texture .. tag_id, self.texture[index])
-		self.meta:set_string(key_infotext .. tag_id, self.infotext[index])
 		index = index - 1
 	until 0 == index
 	self.meta:set_int(key_stack_max_factor, self.stack_max_factor)
@@ -448,6 +466,8 @@ function drawers.cabinet.handler_for(pos_cabinet, skip_cabinet_check)
 			remove_tags = true
 		end
 		drawers.cabinet.handlers[pos_hash] = handler
+		-- we can skip check, as this is done when instantiating new instance.
+		skip_cabinet_check = true
 	end
 	if not skip_cabinet_check then
 		remove_tags = handler:is_cabinet_missing()

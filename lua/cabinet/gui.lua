@@ -18,7 +18,7 @@ end -- drawers.cabinet.gui.upgrade_slots_background
 local list_width = '8'
 if drawers.has_mcl_core then list_width = '9' end
 
-drawers.cabinet.gui.formspec = 'size[9,7]'
+drawers.cabinet.gui.formspec = 'size[' .. list_width .. ',7]'
 	.. 'list[context;upgrades;2,0.5;5,1;]'
 	.. 'list[current_player;main;0,3;' .. list_width .. ',4;]'
 	.. 'listring[]'

@@ -188,42 +188,14 @@ function drawers.cabinet.insert_object_from_tube(pos_cabinet, node, stack, direc
 end -- drawers.cabinet.insert_object_from_tube
 
 function drawers.cabinet.on_construct(pos_cabinet)
-	local node = minetest.get_node(pos_cabinet)
-	local node_def = minetest.registered_nodes[node.name]
-	local drawer_count = node_def.groups.drawers
-
-	local base_stack_max = minetest.nodedef_default.stack_max or 99
-	local stack_max_factor = node_def.drawers_stack_max_factor or 24 -- 3x8
-	stack_max_factor = math.floor(stack_max_factor / drawer_count)
-	local max_count = base_stack_max * stack_max_factor
-
 	-- meta
 	local meta = core.get_meta(pos_cabinet)
-
-	local id = drawer_count
-	local infotext
-	-- TODO: this feels like a duplication of what tag.save_metadata does
-	-- TODO: call handler:init(stack_max_factor, base_stack_max) or similar
-	while 0 < id do
-		meta:set_string('name' .. id, '')
-		meta:set_int('count' .. id, 0)
-		meta:set_int('max_count' .. id, max_count)
-		meta:set_int('base_stack_max' .. id, base_stack_max)
-		meta:set_int('stack_max_factor' .. id, stack_max_factor)
-		infotext = drawers.tag.gui.generate_info_text(
-						S('Empty'), 0, stack_max_factor, base_stack_max)
-
-		meta:set_string('entity_infotext' .. id, infotext)
-
-		id = id - 1
-	end
 	-- create drawer upgrade inventory
 	meta:get_inventory():set_size('upgrades', 5)
-
 	-- set the formspec
 	meta:set_string('formspec', drawers.cabinet.gui.formspec)
-
 	-- spawn all tag entities
+	-- this also triggers handler object to be created
 	drawers.tag.map.spawn_for(pos_cabinet)
 end -- drawers.cabinet.on_construct
 
@@ -345,7 +317,7 @@ function drawers.cabinet.upgrade_update(pos_cabinet, list_name)
 	for _, stack in ipairs(list) do
 		name = stack:get_name()
 		item_def = minetest.registered_items[name]
-		add_to_percent = item_def.groups.drawer_upgrade or 0
+		add_to_percent = item_def.groups.drawers_upgrade or 0
 		storage_percent = storage_percent + add_to_percent
 	end
 

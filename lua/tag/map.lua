@@ -155,19 +155,22 @@ function drawers.tag.map.spawn_for(pos)
 end -- drawers.tag.map.spawn_for
 
 -- remove tags for cabinet at position pos
-function drawers.tag.map.remove_for(pos)
-	local objects = minetest.get_objects_inside_radius(pos, 0.56)
+function drawers.tag.map.remove_for(pos_cabinet)
+	local objects = minetest.get_objects_inside_radius(pos_cabinet, 0.56)
 	if not objects then return end
 
-	local luaentity
-	for _, object in ipairs(objects) do
+	local luaentity, object
+	local index = #objects
+	repeat
+		object = objects[index]
 		luaentity = object:get_luaentity()
-		if luaentity and 'drawers:visual' == entity.name then
+		if luaentity and 'drawers:visual' == luaentity.name then
 			object:remove()
 		end
-	end
+		index = index - 1
+	until 0 == index
 
-	local pos_hash = minetest.hash_node_position(pos)
+	local pos_hash = minetest.hash_node_position(pos_cabinet)
 	drawers.tag.tags[pos_hash] = nil
 end -- drawers.tag.map.remove_for
 
