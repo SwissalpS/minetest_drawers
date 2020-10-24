@@ -5,12 +5,9 @@ local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 --
 -- Register cabinet craft recipes when default mod is available
 --
--- 4 x 8 = 32 normal chest size
-local _base_stack_count = 4 * 8
 
 drawers.cabinet.register('drawers:wood', {
 	description = S('Wooden'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = { choppy = 3, oddly_breakable_by_hand = 2 },
 	material = drawers.settings.wood_itemstring,
 	sounds = drawers.settings.wood_sounds,
@@ -23,7 +20,6 @@ drawers.cabinet.register('drawers:wood', {
 })
 drawers.cabinet.register('drawers:acacia_wood', {
 	description = S('Acacia Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = { choppy = 3, oddly_breakable_by_hand = 2 },
 	material = 'default:acacia_wood',
 	sounds = drawers.settings.wood_sounds,
@@ -36,7 +32,6 @@ drawers.cabinet.register('drawers:acacia_wood', {
 })
 drawers.cabinet.register('drawers:aspen_wood', {
 	description = S('Aspen Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = { choppy = 3, oddly_breakable_by_hand = 2 },
 	material = 'default:aspen_wood',
 	sounds = drawers.settings.wood_sounds,
@@ -49,7 +44,6 @@ drawers.cabinet.register('drawers:aspen_wood', {
 })
 drawers.cabinet.register('drawers:junglewood', {
 	description = S('Junglewood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = { choppy = 3, oddly_breakable_by_hand = 2 },
 	material = 'default:junglewood',
 	sounds = drawers.settings.wood_sounds,
@@ -62,7 +56,6 @@ drawers.cabinet.register('drawers:junglewood', {
 })
 drawers.cabinet.register('drawers:pine_wood', {
 	description = S('Pine Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = { choppy = 3, oddly_breakable_by_hand = 2 },
 	material = 'default:pine_wood',
 	sounds = drawers.settings.wood_sounds,

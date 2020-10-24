@@ -9,8 +9,6 @@ local dcab = drawers.cabinet
 function drawers.cabinet.register(name, def)
 	def.collision_box = { type = 'regular' }
 	def.description = def.description or S('Wooden')
-	-- TODO: treat as slots and cut of at INT_16_MAX = 65535
-	def.drawers_stack_max_factor = def.drawers_stack_max_factor or 24
 	def.drawtype = 'nodebox'
 	def.groups = def.groups or {}
 	def.legacy_facedir_simple = true
@@ -155,10 +153,6 @@ elseif drawers.has_mcl_core then
 else
 	drawers.cabinet.register('drawers:wood', {
 		description = S('Wooden'),
-		-- TODO: a) rename b) find better solution in functions using this.
-		-- the fact that we can currently put in stacks of 65535 items into
-		-- drawers that don't even have upgrades, is troubling.
-		drawers_stack_max_factor = 4 * 8, -- 32 normal chest size
 		groups = { choppy = 3, oddly_breakable_by_hand = 2 },
 		material = drawers.settings.wood_itemstring,
 		sounds = drawers.settings.wood_sounds,

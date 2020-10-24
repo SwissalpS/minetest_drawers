@@ -14,8 +14,9 @@ local key_infotext = 'infotext'
 local key_item_name = 'name'
 local key_item_stack_max = 'item_stack_max'
 local key_locked = 'locked'
+-- TODO: let's drop this one
 local key_max_count = 'max_count'
-local key_stack_max_factor = 'stack_max_factor'
+local key_slots_per_drawer = 'slots_per_drawer'
 local key_texture = 'texture'
 
 -- use this way:
@@ -42,20 +43,17 @@ end
 
 function Handler:how_many_can_insert(tag_id, stack)
 	local stack_count = stack:get_count()
-	if '' == stack:get_name() or 0 >= stack_count then
+	local stack_name = stack:get_name()
+	if '' == stack_name or 0 >= stack_count then
 		return 0
 	end
 	-- don't allow unstackable stacks
-	local id = tonumber(tag_id)
-	-- if drawer is empty and item's max stack size is not 1
-	if '' == self.name[id] and 1 ~= stack:get_stack_max() then
-		-- TODO: limit this to valid stack size and also check if we have that
-		--	much space. Just because we are empty does not guarantee we can take
-		--	any amount.
-		return stack_count
+	if 1 == stack:get_stack_max() then
+		return 0
 	end
+	local id = tonumber(tag_id)
 	-- if attempting to put something else in this drawer
-	if stack:get_name() ~= self.name[id] then
+	if '' ~= self.name[id] and stack_name ~= self.name[id] then
 		return 0
 	end
 	-- fits easily
@@ -114,18 +112,20 @@ function Handler:player_put(tag_id, player)
 		minetest.record_protection_violation(self.pos_cabinet, player_name)
 		return nil
 	end
-
 	-- used to check if we need to play a sound in the end
-	local inventory_changed = false
-	local item_name = self:item_name_for(tag_id)
-	local keys = player:get_player_control()
+	local changed = false
 	local id = tonumber(tag_id)
+	local item_name = self:item_name_for(id)
+	local keys = player:get_player_control()
 	local wielded_item = player:get_wielded_item()
 	-- When the player uses the drawer with their bare hand all
 	-- stacks from the inventory will be added to the drawer.
 	local leftover
+	-- if drawer is not empty or empty but locked
 	if '' ~= item_name
+		-- and player is holding nothing
 		and '' == wielded_item:get_name()
+		-- and not holding sneak
 		and not keys.sneak
 	then
 		-- try to insert all items from inventory
@@ -139,7 +139,7 @@ function Handler:player_put(tag_id, player)
 
 			-- check if something was added
 			if leftover:get_count() < stack:get_count() then
-				inventory_changed = true
+				changed = true
 			end
 
 			-- set new stack
@@ -149,10 +149,9 @@ function Handler:player_put(tag_id, player)
 	else
 		-- try to insert wielded item/stack only
 		leftover = self:try_insert_stack(tag_id, wielded_item, not keys.sneak)
-
 		-- check if something was added
 		if leftover:get_count() < wielded_item:get_count() then
-			inventory_changed = true
+			changed = true
 			item_name = wielded_item:get_name()
 		end
 		-- set the leftover as new wielded item for the player
@@ -169,10 +168,14 @@ function Handler:player_put(tag_id, player)
 				self:write_meta()
 				minetest.chat_send_player(player_name,
 					S('Drawer assigned to @1', item_name))
+				changed = true
 			end
 		end -- if not locked
 	end -- if keys.aux1
-	return inventory_changed
+	if changed then
+		self:update_visibles(id)
+	end
+	return changed
 end -- player_put
 
 -- called when a player punches the entity to take items
@@ -192,6 +195,7 @@ function Handler:player_take(tag_id, player)
 	local keys = player:get_player_control()
 	local id = tonumber(tag_id)
 	local item_name = self.name[id]
+	local changed = false
 	-- unlock if special key is held
 	if keys.aux1 then
 		if 1 == self.locked[id] then
@@ -202,28 +206,34 @@ function Handler:player_take(tag_id, player)
 				self.texture[id] = 'blank.png'
 				-- nothing to take, so
 				self:write_meta()
-				return false
+				return true
 			end
+			changed = true
 			self:write_meta()
 		end -- if locked at all
 	end -- if special pressed
 
+	-- if there is nothing to take, nothing to do
+	if 0 >= self.count[id] then
+		return changed
+	end
+
 	-- fake player has no inventory, right? TODO: check that
 	local inv = player:get_inventory()
-	if not inv then return false end
+	if not inv then return changed end
 
 	-- if player is holding sneak, only one item
 	local stackwize = not keys.sneak
 
 	local checker_stack = ItemStack(item_name)
 	if stackwize then
-		checker_stack:set_count(checker_stack:get_stack_max())
+		checker_stack:set_count(self.item_stack_max[id])
 	end
 	-- what if he has space for half a stack, maybe we should give him that
 	-- turns out, that would need a loop through all slots in inventory gathering
 	-- all the slots for same item and get count of each... doable, but worth it?
 	if not inv:room_for_item('main', checker_stack) then
-		return false
+		return changed
 	end
 
 	local stack
@@ -239,6 +249,7 @@ function Handler:player_take(tag_id, player)
 		-- play the interact sound
 		return true
 	end
+	return changed
 end -- player_take
 
 function Handler:read_meta()
@@ -252,25 +263,24 @@ function Handler:read_meta()
 	self.locked = {}
 	self.max_count = {}
 	self.name = {}
-	self.stack_max_factor = self.meta:get_int(key_stack_max_factor)
+	self.slots_per_drawer = self.meta:get_int(key_slots_per_drawer)
 	-- TODO: see if we can do without caching these two and maybe more
 	self.infotext = {}
 	self.texture = {}
-	local needs_init = 0 == self.stack_max_factor
+	local needs_init = 0 == self.slots_per_drawer
 	local index = self.drawer_count
-	local tag_id
+	local tag_id, name, stack_max, max_count
 	if needs_init then
 		-- must be initialized, probably drawer has only just been placed
-		local node_def = minetest.registered_nodes[self.cabinet_node.name]
-		local base_stack_max = minetest.nodedef_default.stack_max or 99
-		self.stack_max_factor = node_def.drawers_stack_max_factor or 24 -- 3x8
-		self.stack_max_factor = math.floor(self.stack_max_factor / self.drawer_count)
-		local max_count = base_stack_max * self.stack_max_factor
+		self.slots_per_drawer = math.floor(
+			drawers.settings.base_slot_count / self.drawer_count)
+		stack_max = minetest.nodedef_default.stack_max or 99
+		max_count = stack_max * self.slots_per_drawer
 		repeat
 			self.count[index] = 0
 			self.infotext[index] = drawers.tag.gui.generate_info_text(
-							S('Empty'), 0, self.stack_max_factor, base_stack_max)
-			self.item_stack_max[index] = base_stack_max
+							S('Empty'), 0, max_count, nil)
+			self.item_stack_max[index] = stack_max
 			self.locked[index] = 0
 			self.max_count[index] = max_count
 			self.name[index] = ''
@@ -283,13 +293,16 @@ function Handler:read_meta()
 		-- just read
 		repeat
 			tag_id = tostring(index)
+			name = self.meta:get_string(key_item_name .. tag_id)
+			stack_max = minetest.registered_items[name].stack_max
 			self.count[index] = self.meta:get_int(key_count .. tag_id)
 			self.infotext[index] = self.meta:get_string(key_infotext .. tag_id)
-			self.item_stack_max[index] = self.meta:get_int(key_item_stack_max .. tag_id)
+			self.item_stack_max[index] = stack_max
+			self.name[index] = name
 			self.locked[index] = self.meta:get_int(key_locked .. tag_id)
-			self.max_count[index] = self.meta:get_int(key_max_count .. tag_id)
-			self.name[index] = self.meta:get_string(key_item_name .. tag_id)
+			self.max_count[index] = stack_max * self.slots_per_drawer
 			self.texture[index] = self.meta:get_string(key_texture .. tag_id)
+			-- TODO does this ever happen?
 			if '' == self.texture[index] then
 				self.texture[index] = 'blank.png'
 			end
@@ -299,24 +312,19 @@ function Handler:read_meta()
 	return true
 end -- read_meta
 
-function Handler:set_stack_max_factor(stack_max_factor)
+function Handler:set_slots_per_drawer(slots_per_drawer)
 
-	self.stack_max_factor = stack_max_factor
+	self.slots_per_drawer = slots_per_drawer
 
 	-- TODO: test if we need to copy this or if this is implicitly a copy
 	local id = self.drawer_count
 	repeat
-		self.max_count[id] = self.stack_max_factor * self.item_stack_max[id]
-		self:update_infotext(id)
+		self.max_count[id] = self.slots_per_drawer * self.item_stack_max[id]
+		self:update_visibles(id)
 		id = id - 1
 	until 0 == id
 	self:write_meta()
-
-end -- set_stack_max_factor
-
-function Handler:stack_max_factor_for(tag_id)
-	return self.stack_max_factor or 0
-end
+end -- set_slots_per_drawer
 
 function Handler:take_items(tag_id, take_count)
 	local id = tonumber(tag_id)
@@ -330,12 +338,13 @@ function Handler:take_items(tag_id, take_count)
 
 	local item_name = self.name[id]
 	local stack = ItemStack(item_name)
+	take_count = math.min(take_count, stack:get_stack_max())
 	stack:set_count(take_count)
 
 	-- update everything
+	-- TODO: optimize, we are taking out, only need to update infotext mostly
 	self.count[id] = self.count[id] - take_count
-	self:update_infotext(tag_id)
-	self.texture[id] = drawers.tag.gui.get_image(item_name)
+	self:update_visibles(tag_id)
 	self:write_meta()
 
 	-- return the stack that was removed from the drawer
@@ -343,7 +352,8 @@ function Handler:take_items(tag_id, take_count)
 end -- take_items
 
 function Handler:take_stack(tag_id)
-	return self:take_items(tag_id, ItemStack(self:item_name_for(tag_id)):get_stack_max())
+	local id = tonumber(tag_id)
+	return self:take_items(id, self.item_stack_max[id])
 end -- take_stack
 
 function Handler:texture_for(tag_id)
@@ -359,7 +369,6 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 	end
 
 	local insert_count = self:how_many_can_insert(tag_id, itemstack)
-
 	-- no space, no action
 	if 0 == insert_count then
 		return stack
@@ -370,15 +379,16 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 	-- in case the drawer was empty, initialize count, itemName, maxCount
 	if '' == self:item_name_for(tag_id) then
 		self.count[id] = 0
-		self.name[id] = itemstack:get_name()
-		self.max_count[id] = itemstack:get_stack_max() * self.stack_max_factor
-		self.item_stack_max[id] = itemstack:get_stack_max()
+		local name = itemstack:get_name()
+		local stack_max = minetest.registered_items[name].stack_max
+		self.name[id] = name
+		self.max_count[id] = stack_max * self.slots_per_drawer
+		self.item_stack_max[id] = stack_max
 	end
 
 	-- update everything
 	self.count[id] = self.count[id] + insert_count
-	self:update_infotext(tag_id)
-	self.texture[id] = drawers.tag.gui.get_image(self.name[id])
+	self:update_visibles(tag_id)
 	self:write_meta()
 
 	-- return leftover
@@ -390,13 +400,25 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 	return itemstack
 end -- try_insert_stack
 
-function Handler:update_infotext(tag_id)
+-- don't actually tell visibles to update, just prepare what they need
+function Handler:update_visibles(tag_id)
 	local id = tonumber(tag_id)
 	local item_description = ''
 	local item_def = minetest.registered_items[self.name[id]]
 	if item_def and item_def.description then
 		item_description = item_def.description
 	end
+
+	-- string or nil to send to infotext generator
+	local locked_to = nil
+	if 0 < self.locked[id] then
+		-- drawer is locked to an item type
+		if '' == item_description then
+			locked_to = self.name[id]
+		else
+			locked_to = item_description
+		end
+	end -- if is locked
 
 	if 0 >= self.count[id] then
 		self.count[id] = 0
@@ -405,14 +427,17 @@ function Handler:update_infotext(tag_id)
 			self.name[id] = ''
 			self.texture[id] = 'blank.png'
 		end
-	end -- if empty
+	elseif 'blank.png' == self.texture[id] then
+		-- contents changed to have a texture
+		self.texture[id] = drawers.tag.gui.get_image(self.name[id])
+	end -- if empty or not
 
 	self.infotext[id] = drawers.tag.gui.generate_info_text(
 		item_description,
 		self.count[id],
-		self.stack_max_factor,
-		self.item_stack_max[id])
-end -- update_infotext
+		self.max_count[id],
+		locked_to)
+end -- update_visibles
 
 function Handler:write_meta()
 	if not self.is_valid then
@@ -424,16 +449,18 @@ function Handler:write_meta()
 		tag_id = tostring(index)
 		self.meta:set_int(key_count .. tag_id, self.count[index])
 		self.meta:set_string(key_infotext .. tag_id, self.infotext[index])
-		self.meta:set_int(key_item_stack_max .. tag_id, self.item_stack_max[index])
 		self.meta:set_string(key_item_name .. tag_id, self.name[index])
 		self.meta:set_int(key_locked .. tag_id, self.locked[index])
+		self.meta:set_string(key_texture .. tag_id, self.texture[index])
 		-- TODO: can we please not store this one, we already have the other
 		--		two factors that produce this value
+		-- YES: both can be removed now, but for debugging sake, we'll leave it in
+		--		for now, at least
 		self.meta:set_int(key_max_count .. tag_id, self.max_count[index])
-		self.meta:set_string(key_texture .. tag_id, self.texture[index])
+		self.meta:set_int(key_item_stack_max .. tag_id, self.item_stack_max[index])
 		index = index - 1
 	until 0 == index
-	self.meta:set_int(key_stack_max_factor, self.stack_max_factor)
+	self.meta:set_int(key_slots_per_drawer, self.slots_per_drawer)
 
 	return true
 end -- write_meta

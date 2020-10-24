@@ -1,8 +1,6 @@
 --
 -- drawers/lua/tag/register.lua
 --
--- Load support for intllib.
-local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 
 local entity_def = {
 	initial_properties = {
@@ -28,37 +26,11 @@ local entity_def = {
 	on_rightclick = drawers.tag.handle_use_put,
 	-- to take items out
 	on_punch = drawers.tag.handle_punch_take,
-	-- take n items from drawer
-	-- custom field, could be renamed
-	take_items = drawers.tag.take_items,
-	-- take a stack from drawer
-	-- custom field, could be renamed
-	take_stack = drawers.tag.take_stack,
-	-- investigate how many would fit in from given ItemStack
-	-- custom field, was renamed
-	how_many_can_insert = drawers.tag.how_many_can_insert,
-	-- insert as many as can fit
-	-- custom field, could be renamed
-	try_insert_stack = drawers.tag.try_insert_stack,
 	-- custom field, was renamed
 	update_infotext = drawers.tag.update_infotext,
-	-- custom field, was renamed
-	update_texture = drawers.tag.update_texture,
-	-- when upgrades are removed. called by drop_overload
-	-- custom field, was renamed
-	drop_stack = drawers.tag.drop_stack,
-	-- drop overflow when upgrades are removed and items no longer fit
-	-- custom field, was renamed
-	drop_overload = drawers.tag.drop_overload,
-	-- called when upgrades are removed (or added)
-	-- custom field, was renamed
-	set_stack_max_factor = drawers.tag.set_stack_max_factor,
 	-- called whenever items are put in or taken out manually
 	-- custom field, could be renamed
 	play_interact_sound = drawers.tag.play_interact_sound,
-	-- dump our parameters into cabinet meta data
-	-- custom field, was renamed
-	save_metadata = drawers.tag.save_metadata,
 	migrate_cabinet_meta = drawers.tag.migrate_cabinet_meta
 
 } -- entity_def

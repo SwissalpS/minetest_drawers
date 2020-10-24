@@ -109,7 +109,7 @@ function drawers.cabinet.drop_overload(pos_cabinet)
 		end
 		-- TODO: this is not nice to modify from here
 		handler.count[id] = count
-		handler:update_infotext(id)
+		handler:update_visibles(id)
 		id = id - 1
 	until 0 == id
 	handler:write_meta()
@@ -300,36 +300,30 @@ function drawers.cabinet.upgrade_update(pos_cabinet, list_name)
 	if 'upgrades' ~= list_name then
 		return
 	end
-
+	-- fetch handler for this cabinet
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen
 		return
 	end
 
-	-- storage percent with all upgrades
-	local storage_percent = 100
+	local slot_count = drawers.settings.base_slot_count
 
 	-- get info of all upgrades
 	local inventory = handler.meta:get_inventory()
 	local list = inventory:get_list('upgrades')
-	local name, item_def, add_to_percent
-	for _, stack in ipairs(list) do
-		name = stack:get_name()
+	local name, item_def, increment
+	local index = #list
+	repeat
+		name = list[index]:get_name()
 		item_def = minetest.registered_items[name]
-		add_to_percent = item_def.groups.drawers_upgrade or 0
-		storage_percent = storage_percent + add_to_percent
-	end
+		increment = item_def.groups.drawers_increment or 0
+		slot_count = slot_count + increment
+		index = index - 1
+	until 0 == index
 
-	local node_def = minetest.registered_nodes[handler.cabinet_node.name]
-	-- default number of slots stack
-	local stack_max_factor = node_def.drawers_stack_max_factor
-	-- i.e.: 150% / 100 => 1.50
-	stack_max_factor = math.floor(stack_max_factor * (storage_percent * 0.01))
-	-- calculate stack_max factor for a single drawer
-	stack_max_factor = math.floor(stack_max_factor / handler.drawer_count)
-
-	handler:set_stack_max_factor(stack_max_factor)
+	local slots_per_drawer = math.floor(slot_count / handler.drawer_count)
+	handler:set_slots_per_drawer(slots_per_drawer)
 
 	drawers.cabinet.drop_overload(pos_cabinet)
 

@@ -1,8 +1,6 @@
 --
 -- drawers/lua/tag/tag.lua
 --
--- Load support for intllib.
-local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 
 -- this only migrates metadata in cabinet node for self
 function drawers.tag:migrate_cabinet_meta()

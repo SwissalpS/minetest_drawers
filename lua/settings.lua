@@ -6,6 +6,7 @@ drawers.settings = {}
 
 drawers.settings.chest_itemstring = 'chest'
 drawers.settings.wood_itemstring = 'group:wood'
+drawers.settings.base_slot_count = 4 * 8
 
 if drawers.has_default then
 	drawers.settings.chest_itemstring = 'default:chest'
@@ -15,6 +16,7 @@ elseif drawers.has_mcl_core then  -- MineClone 2
 	if drawers.has_mcl_sounds then
 		drawers.settings.wood_sounds = mcl_sounds.node_sound_wood_defaults()
 	end
+	drawers.settings.base_slot_count = 4 * 9
 end
 
 -- which cabinet sizes are available on this server

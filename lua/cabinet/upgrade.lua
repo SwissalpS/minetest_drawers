@@ -6,11 +6,14 @@ local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 -- may be referenced as du or dupg
 drawers.upgrade = {}
 
+local base_slot_count = drawers.settings.base_slot_count
+
 -- helper function to register craftitems and recipes for upgrades
 function drawers.upgrade.register(name, def)
 	def.groups = def.groups or {}
 	-- custom group entry
-	def.groups.drawers_increment = def.groups.drawers_increment or 100
+	def.groups.drawers_increment = def.groups.drawers_increment or base_slot_count
+
 	def.inventory_image = def.inventory_image or 'drawers_upgrade_template.png'
 	-- TODO: discuss if this had a good reason to be 1 and if 5 makes sense
 	--		or if we simply set to 99 for default and 1 for MCL servers, since
@@ -48,64 +51,64 @@ end -- drawers.cabinet.register_upgrade
 --		itterate over them
 if drawers.has_default then
 	drawers.upgrade.register('drawers:upgrade_steel', {
-		description = S('Steel Drawer Upgrade (x2)'),
-		groups = { drawers_increment = 100 },
+		description = S('Steel Drawer Upgrade (+@1 slots)', base_slot_count),
+		groups = { drawers_increment = base_slot_count },
 		inventory_image = 'drawers_upgrade_steel.png',
 		recipe_item = 'default:steel_ingot'
 	})
 
 	drawers.upgrade.register('drawers:upgrade_gold', {
-		description = S('Gold Drawer Upgrade (x3)'),
-		groups = { drawers_increment = 200 },
+		description = S('Gold Drawer Upgrade (+@1 slots)', 2 * base_slot_count),
+		groups = { drawers_increment = 2 * base_slot_count },
 		inventory_image = 'drawers_upgrade_gold.png',
 		recipe_item = 'default:gold_ingot'
 	})
 
 	drawers.upgrade.register('drawers:upgrade_obsidian', {
-		description = S('Obsidian Drawer Upgrade (x4)'),
-		groups = { drawers_increment = 300 },
+		description = S('Obsidian Drawer Upgrade (+@1 slots)', 3 * base_slot_count),
+		groups = { drawers_increment = 3 * base_slot_count },
 		inventory_image = 'drawers_upgrade_obsidian.png',
 		recipe_item = 'default:obsidian'
 	})
 
 	drawers.upgrade.register('drawers:upgrade_diamond', {
-		description = S('Diamond Drawer Upgrade (x8)'),
-		groups = { drawers_increment = 700 },
+		description = S('Diamond Drawer Upgrade (+@1 slots)', 7 * base_slot_count),
+		groups = { drawers_increment = 7 * base_slot_count },
 		inventory_image = 'drawers_upgrade_diamond.png',
 		recipe_item = 'default:diamond'
 	})
 elseif drawers.has_mcl_core then
 	drawers.upgrade.register('drawers:upgrade_iron', {
-		description = S('Iron Drawer Upgrade (x2)'),
-		groups = { drawers_increment = 100 },
+		description = S('Iron Drawer Upgrade (+@1 slots)', base_slot_count),
+		groups = { drawers_increment = base_slot_count },
 		inventory_image = 'drawers_upgrade_iron.png',
 		recipe_item = 'mcl_core:iron_ingot'
 	})
 
 	drawers.upgrade.register('drawers:upgrade_gold', {
-		description = S('Gold Drawer Upgrade (x3)'),
-		groups = { drawers_increment = 200 },
+		description = S('Gold Drawer Upgrade (+@1 slots)', 2 * base_slot_count),
+		groups = { drawers_increment = 2 * base_slot_count },
 		inventory_image = 'drawers_upgrade_gold.png',
 		recipe_item = 'mcl_core:gold_ingot'
 	})
 
 	drawers.upgrade.register('drawers:upgrade_obsidian', {
-		description = S('Obsidian Drawer Upgrade (x4)'),
-		groups = { drawers_increment = 300 },
+		description = S('Obsidian Drawer Upgrade (+@1 slots)', 3 * base_slot_count),
+		groups = { drawers_increment = 3 * base_slot_count },
 		inventory_image = 'drawers_upgrade_obsidian.png',
 		recipe_item = 'mcl_core:obsidian'
 	})
 
 	drawers.upgrade.register('drawers:upgrade_diamond', {
-		description = S('Diamond Drawer Upgrade (x8)'),
-		groups = { drawers_increment = 700 },
+		description = S('Diamond Drawer Upgrade (+@1 slots)', 7 * base_slot_count),
+		groups = { drawers_increment = 7 * base_slot_count },
 		inventory_image = 'drawers_upgrade_diamond.png',
 		recipe_item = 'mcl_core:diamond'
 	})
 
 	drawers.upgrade.register('drawers:upgrade_emerald', {
-		description = S('Emerald Drawer Upgrade (x13)'),
-		groups = { drawers_increment = 1200 },
+		description = S('Emerald Drawer Upgrade (+@1 slots)', 12 * base_slot_count),
+		groups = { drawers_increment = 12 * base_slot_count },
 		inventory_image = 'drawers_upgrade_emerald.png',
 		recipe_item = 'mcl_core:emerald'
 	})
@@ -113,8 +116,8 @@ end
 
 if drawers.has_moreores then
 	drawers.upgrade.register('drawers:upgrade_mithril', {
-		description = S('Mithril Drawer Upgrade (x13)'),
-		groups = { drawers_increment = 1200 },
+		description = S('Mithril Drawer Upgrade (+@1 slots)', 12 * base_slot_count),
+		groups = { drawers_increment = 12 * base_slot_count },
 		inventory_image = 'drawers_upgrade_mithril.png',
 		recipe_item = 'moreores:mithril_ingot'
 	})

@@ -5,14 +5,11 @@ local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 --
 -- Register cabinet craft recipes
 --
--- 4 x 9 = 36 normal mcl chest size
-local _base_stack_count = 4 * 9
 
 drawers.cabinet.register('drawers:oakwood', {
 	_mcl_blast_resistance = 15,
 	_mcl_hardness = 2,
 	description = S('Oak Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = {
 		handy = 1, axey = 1, flammable = 3, wood = 1,
 		building_block = 1, material_wood = 1
@@ -30,7 +27,6 @@ drawers.cabinet.register('drawers:acaciawood', {
 	_mcl_blast_resistance = 15,
 	_mcl_hardness = 2,
 	description = S('Acacia Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = {
 		handy = 1, axey = 1, flammable = 3, wood = 1,
 		building_block = 1, material_wood = 1
@@ -48,7 +44,6 @@ drawers.cabinet.register('drawers:birchwood', {
 	_mcl_blast_resistance = 15,
 	_mcl_hardness = 2,
 	description = S('Birch Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = {
 		handy = 1, axey = 1, flammable = 3, wood = 1,
 		building_block = 1, material_wood = 1
@@ -66,7 +61,6 @@ drawers.cabinet.register('drawers:darkwood', {
 	_mcl_blast_resistance = 15,
 	_mcl_hardness = 2,
 	description = S('Dark Oak Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = {
 		handy = 1, axey = 1, flammable = 3, wood = 1,
 		building_block = 1, material_wood = 1
@@ -84,7 +78,6 @@ drawers.cabinet.register('drawers:junglewood', {
 	_mcl_blast_resistance = 15,
 	_mcl_hardness = 2,
 	description = S('Junglewood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = {
 		handy = 1, axey = 1, flammable = 3, wood = 1,
 		building_block = 1, material_wood = 1
@@ -102,7 +95,6 @@ drawers.cabinet.register('drawers:sprucewood', {
 	_mcl_blast_resistance = 15,
 	_mcl_hardness = 2,
 	description = S('Spruce Wood'),
-	drawers_stack_max_factor = _base_stack_count,
 	groups = {
 		handy = 1, axey = 1, flammable = 3, wood = 1,
 		building_block = 1, material_wood = 1
