@@ -7,7 +7,7 @@ local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 
 drawers.tag.gui = {}
 
-function drawers.tag.gui.generate_info_text(description, count, max_count, locked_to)
+function drawers.tag.gui.generate_infotext(description, count, max_count, locked_to)
 	-- calculate percentage
 	local percent = count / max_count * 100
 	-- round the number (float -> int)
@@ -15,7 +15,7 @@ function drawers.tag.gui.generate_info_text(description, count, max_count, locke
 	local text
 	if 0 == count then
 		-- empty drawer
-		text = S('@1 (0% full)', description)
+		text = S('Empty (0% full)')
 	else
 		text = S('@1 @2 (@3% full)', tostring(count), description, tostring(percent))
 	end
@@ -23,7 +23,7 @@ function drawers.tag.gui.generate_info_text(description, count, max_count, locke
 		text = text .. '\13' .. S('Locked to: ') .. locked_to
 	end
 	return text
-end -- drawers.tag.gui.generate_info_text
+end -- drawers.tag.gui.generate_infotext
 
 function drawers.tag.gui.get_image(name)
 	local texture = 'blank.png'

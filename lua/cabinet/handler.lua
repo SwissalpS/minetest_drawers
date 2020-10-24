@@ -278,8 +278,9 @@ function Handler:read_meta()
 		max_count = stack_max * self.slots_per_drawer
 		repeat
 			self.count[index] = 0
-			self.infotext[index] = drawers.tag.gui.generate_info_text(
-							S('Empty'), 0, max_count, nil)
+			self.infotext[index] = drawers.tag.gui.generate_infotext(
+														'', 0, max_count, nil)
+
 			self.item_stack_max[index] = stack_max
 			self.locked[index] = 0
 			self.max_count[index] = max_count
@@ -422,7 +423,7 @@ function Handler:update_visibles(tag_id)
 
 	if 0 >= self.count[id] then
 		self.count[id] = 0
-		item_description = S('Empty')
+		item_description = ''
 		if 0 == self.locked[id] then
 			self.name[id] = ''
 			self.texture[id] = 'blank.png'
@@ -432,11 +433,14 @@ function Handler:update_visibles(tag_id)
 		self.texture[id] = drawers.tag.gui.get_image(self.name[id])
 	end -- if empty or not
 
-	self.infotext[id] = drawers.tag.gui.generate_info_text(
+	self.infotext[id] = drawers.tag.gui.generate_infotext(
 		item_description,
 		self.count[id],
 		self.max_count[id],
 		locked_to)
+
+	local tag = drawers.tag.map.tag_for(self.pos_cabinet, id)
+	tag:update(self.infotext[id], self.texture[id])
 end -- update_visibles
 
 function Handler:write_meta()

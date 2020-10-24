@@ -1,7 +1,7 @@
 --
 -- drawers/lua/tag/tag.lua
 --
-
+--[[
 -- this only migrates metadata in cabinet node for self
 function drawers.tag:migrate_cabinet_meta()
 	-- for now we have nothing to migrate
@@ -37,6 +37,7 @@ function drawers.tag.migrate_tag_data(data)
 
 	return data
 end -- drawers.tag.migrate
+--]]
 
 -- this is called when entity is deactivated, it MUST return a string.
 -- this string will be passed to on_activate when entity is restored.
@@ -91,9 +92,6 @@ end -- drawers.tag.handle_use_put
 -- first time static_data_serialized is an empty string
 -- delta_seconds is the time that passed since entyty was deactivated, we can ignore that.
 function drawers.tag:on_activate(static_data_serialized, delta_seconds)
-	-- TODO: why are we using object pos here and pos_cabinet later for same
-	-- variable?
-	-- Now that I moved this block to beginning it makes more sense to use object pos
 	self.pos_cabinet = vector.round(self.object:get_pos())
 	local handler = drawers.cabinet.handler_for(self.pos_cabinet)
 	if not handler then
@@ -166,9 +164,16 @@ function drawers.tag:play_interact_sound()
 	})
 end -- drawers.tag:play_interact_sound
 
+function drawers.tag:update(new_infotext, new_texture)
+	self.object:set_properties({
+		infotext = new_infotext,-- .. '\n\n\n\n\n',
+		textures = { new_texture },
+	})
+end -- drawers.tag:update
+
 function drawers.tag:update_infotext(new_infotext)
 	self.object:set_properties({
-		infotext = new_infotext .. '\n\n\n\n\n',
+		infotext = new_infotext-- .. '\n\n\n\n\n',
 	})
 end -- drawers.tag:update_infotext
 

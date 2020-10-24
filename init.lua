@@ -13,7 +13,6 @@ dofile(drawers.modpath .. '/lua/gui.lua')
 -- server settings and hard coded values
 dofile(drawers.modpath .. '/lua/settings.lua')
 -- load tag code aka visual, the entity showing what is in drawer
--- also manual interaction is handled in entity's object code
 dofile(drawers.modpath .. '/lua/tag/init.lua')
 -- load cabinet code aka drawer node and trim, register crafts and nodes
 -- stores meta for drawers within a cabinet
