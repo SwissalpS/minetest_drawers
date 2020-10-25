@@ -81,6 +81,9 @@ function Handler:is_cabinet_missing()
 	-- check that it is a drawers compatible node
 	-- TODO: we may need to do better check here
 	local node_def = minetest.registered_nodes[self.cabinet_node.name]
+	if not node_def then
+		return false
+	end -- if unknown item
 	self.drawer_count = node_def.groups.drawers
 	if not (0 < self.drawer_count) then
 		return true
@@ -288,14 +291,11 @@ function Handler:read_meta()
 		max_count = stack_max * self.slots_per_drawer
 		repeat
 			self.count[index] = 0
-			self.infotext[index] = drawers.tag.gui.generate_infotext(
-														'', 0, max_count, nil)
-
 			self.item_stack_max[index] = stack_max
 			self.locked[index] = 0
 			self.max_count[index] = max_count
 			self.name[index] = ''
-			self.texture[index] = 'blank.png'
+			self:update_visibles(index)
 			index = index - 1
 		until 0 == index
 		-- probably good idea to save meta at this point
@@ -321,16 +321,14 @@ function Handler:read_meta()
 				minetest.log('warning', warning)
 				print(warning)
 			end
-			self.infotext[index] = self.meta:get_string(key_infotext .. tag_id)
+			self.infotext[index] = '' --self.meta:get_string(key_infotext .. tag_id)
 			self.item_stack_max[index] = stack_max
 			self.name[index] = name
 			self.locked[index] = self.meta:get_int(key_locked .. tag_id)
 			self.max_count[index] = stack_max * self.slots_per_drawer
-			self.texture[index] = self.meta:get_string(key_texture .. tag_id)
-			-- TODO does this ever happen?
-			if '' == self.texture[index] then
-				self.texture[index] = 'blank.png'
-			end
+			--self.texture[index] = self.meta:get_string(key_texture .. tag_id)
+
+			self:update_visibles(index)
 			index = index - 1
 		until 0 == index -- loop all drawers of this cabinet into object fields
 	end -- if needs init or just read
@@ -456,7 +454,7 @@ function Handler:update_visibles(tag_id)
 			self.name[id] = ''
 			self.texture[id] = 'blank.png'
 		end
-	elseif 'blank.png' == self.texture[id] then
+	elseif 'blank.png' == self:texture_for(id) then
 		-- contents changed to have a texture
 		self.texture[id] = drawers.tag.gui.get_image(self.name[id])
 	end -- if empty or not
@@ -484,16 +482,8 @@ function Handler:write_meta()
 	repeat
 		tag_id = tostring(index)
 		self.meta:set_int(key_count .. tag_id, self.count[index])
-		self.meta:set_string(key_infotext .. tag_id, self.infotext[index])
 		self.meta:set_string(key_item_name .. tag_id, self.name[index])
 		self.meta:set_int(key_locked .. tag_id, self.locked[index])
-		self.meta:set_string(key_texture .. tag_id, self.texture[index])
-		-- TODO: can we please not store this one, we already have the other
-		--		two factors that produce this value
-		-- YES: both can be removed now, but for debugging sake, we'll leave it in
-		--		for now, at least
-		self.meta:set_int(key_max_count .. tag_id, self.max_count[index])
-		self.meta:set_int(key_item_stack_max .. tag_id, self.item_stack_max[index])
 		index = index - 1
 	until 0 == index
 	self.meta:set_int(key_slots_per_drawer, self.slots_per_drawer)
