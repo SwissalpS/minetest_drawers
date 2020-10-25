@@ -54,7 +54,7 @@ function drawers.cabinet.register(name, def)
 	if drawers.settings.use_cabinet_1x1 then
 		-- normal drawer 1x1 = 1
 		local def1 = table.copy(def)
-		def1.description = S('@1 Drawer', def.description)
+		def1.description = S('@1 1 Drawer Cabinet', def.description)
 		def1.groups.drawers = 1
 		def1.tiles = def.tiles or def.tiles1
 		def1.tiles1 = nil
@@ -75,7 +75,7 @@ function drawers.cabinet.register(name, def)
 	if drawers.settings.use_cabinet_1x2 then
 		-- 1x2 = 2
 		local def2 = table.copy(def)
-		def2.description = S('@1 Drawers (1x2)', def.description)
+		def2.description = S('@1 2 Drawers Cabinet', def.description)
 		def2.groups.drawers = 2
 		def2.tiles = def.tiles2
 		def2.tiles1 = nil
@@ -92,7 +92,7 @@ function drawers.cabinet.register(name, def)
 	if drawers.settings.use_cabinet_2x2 then
 		-- 2x2 = 4
 		local def4 = table.copy(def)
-		def4.description = S('@1 Drawers (2x2)', def.description)
+		def4.description = S('@1 4 Drawers Cabinet', def.description)
 		def4.groups.drawers = 4
 		def4.tiles = def.tiles4
 		def4.tiles1 = nil
