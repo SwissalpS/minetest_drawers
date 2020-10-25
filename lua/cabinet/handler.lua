@@ -10,14 +10,9 @@ local Handler = Base_Object:extend()
 -- other code that accesses cabinet node's metadata can use the same ones
 -- would have to be cleaned up in migrate_cabinet_meta()
 local key_count = 'count'
-local key_infotext = 'infotext'
 local key_item_name = 'name'
-local key_item_stack_max = 'item_stack_max'
 local key_locked = 'locked'
--- TODO: let's drop this one
-local key_max_count = 'max_count'
 local key_slots_per_drawer = 'slots_per_drawer'
-local key_texture = 'texture'
 
 --- Handler object initializer
 -- use this way:
@@ -330,12 +325,11 @@ function Handler:read_meta()
 				minetest.log('warning', warning)
 				print(warning)
 			end
-			self.infotext[index] = '' --self.meta:get_string(key_infotext .. tag_id)
+			self.infotext[index] = ''
 			self.item_stack_max[index] = stack_max
 			self.name[index] = name
 			self.locked[index] = self.meta:get_int(key_locked .. tag_id)
 			self.max_count[index] = stack_max * self.slots_per_drawer
-			--self.texture[index] = self.meta:get_string(key_texture .. tag_id)
 
 			self:update_visibles(index)
 
