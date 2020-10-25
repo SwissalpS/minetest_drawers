@@ -66,7 +66,6 @@ end -- handle_punch_take
 -- called when player right clicks entity with or without something in hand.
 -- to put items in
 function drawers.tag:handle_use_put(player)
-print('tag:handle_use_put')
 	-- get handler. Will also check if cabinet node exists and remove tags if not.
 	local handler = drawers.cabinet.handler_for(self.pos_cabinet)
 	if not handler then

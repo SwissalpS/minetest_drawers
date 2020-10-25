@@ -341,6 +341,7 @@ function Handler:read_meta()
 			--self.texture[index] = self.meta:get_string(key_texture .. tag_id)
 
 			self:update_visibles(index)
+
 			index = index - 1
 		until 0 == index -- loop all drawers of this cabinet into object fields
 	end -- if needs init or just read
