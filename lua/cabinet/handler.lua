@@ -19,8 +19,11 @@ local key_max_count = 'max_count'
 local key_slots_per_drawer = 'slots_per_drawer'
 local key_texture = 'texture'
 
+--- Handler object initializer
 -- use this way:
 --	local handler = Handler(pos_cabinet)
+-- called by handler_for() when area is first loaded or some other mod cleared
+-- out some cached objects.
 function Handler:new(pos_cabinet)
 	self.is_valid = false
 	self.pos_cabinet = table.copy(pos_cabinet)
@@ -41,6 +44,9 @@ function Handler:count_for(tag_id)
 	return self.count[tonumber(tag_id)] or ''
 end
 
+--- Inquire how much of stack fits in drawer.
+-- returns int >= 0
+-- called by pipeworks compatible nodes
 function Handler:how_many_can_insert(tag_id, stack)
 	local stack_count = stack:get_count()
 	local stack_name = stack:get_name()
@@ -72,6 +78,8 @@ function Handler:infotext_for(tag_id)
 	return self.infotext[tonumber(tag_id)] or ''
 end
 
+--- Checks if the cabinet node actually exists
+-- returns boolean
 function Handler:is_cabinet_missing()
 	-- check if there is a node at all there
 	self.cabinet_node = minetest.get_node_or_nil(self.pos_cabinet)
@@ -107,8 +115,8 @@ function Handler:max_count_for(tag_id)
 	return self.max_count[tonumber(tag_id)] or 0
 end
 
--- called when player right clicks tag with or without something in hand,
--- to put items in
+--- Handle player right-clicking tag entity to put items in drawer.
+-- with or without something in hand,
 function Handler:player_put(tag_id, player)
 	if player.is_fake_player then
 		return nil
@@ -191,7 +199,7 @@ function Handler:player_put(tag_id, player)
 	return changed
 end -- player_put
 
--- called when a player punches the entity to take items
+--- Handle player punching tag entity to take items out.
 --function drawers.tag.handle_punch_take(self, player, time_from_last_punch,
 --										tool_capabilities, dir)
 function Handler:player_take(tag_id, player)
@@ -265,6 +273,10 @@ function Handler:player_take(tag_id, player)
 	return changed
 end -- player_take
 
+--- reads meta from cabinet node and populates Handler object tables
+-- called by Handler:new()
+-- If another mod wants to manipulate meta, theis is what to call to refresh it.
+-- updates visuals
 function Handler:read_meta()
 	if not self.is_valid then
 		-- TODO: do we need this check anymore?
@@ -335,6 +347,9 @@ function Handler:read_meta()
 	return true
 end -- read_meta
 
+--- update upgrade changes
+-- updates visuals and writes to meta
+-- called when cabinet formspec is manipulated and maybe soon also by controller
 function Handler:set_slots_per_drawer(slots_per_drawer)
 
 	self.slots_per_drawer = slots_per_drawer
@@ -349,6 +364,10 @@ function Handler:set_slots_per_drawer(slots_per_drawer)
 	self:write_meta()
 end -- set_slots_per_drawer
 
+--- take requested amount out of drawer with id tag_id or as much as is in there
+-- returns stack of taken items
+-- updates visuals
+-- see also Handler:take_stack(tag_id)
 function Handler:take_items(tag_id, take_count)
 	local id = tonumber(tag_id)
 	if 0 >= self.count[id] then
@@ -374,7 +393,7 @@ function Handler:take_items(tag_id, take_count)
 	return stack
 end -- take_items
 
---- proxy to Handler:take_items()
+--- proxy to Handler:take_items(tag_id, take_count)
 -- returns the stack that was removed from the drawer
 function Handler:take_stack(tag_id)
 	local id = tonumber(tag_id)
@@ -427,7 +446,9 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 	return stack
 end -- try_insert_stack
 
--- don't actually tell visibles to update, just prepare what they need
+--- update user visible indicators
+-- infotext and texture
+-- called whenever transaction happens and also at init of Handler object
 function Handler:update_visibles(tag_id)
 	local id = tonumber(tag_id)
 	local item_description = ''
@@ -448,9 +469,11 @@ function Handler:update_visibles(tag_id)
 	end -- if is locked
 
 	if 0 >= self.count[id] then
+		-- no items
 		self.count[id] = 0
 		item_description = ''
 		if 0 == self.locked[id] then
+			-- not locked
 			self.name[id] = ''
 			self.texture[id] = 'blank.png'
 		end

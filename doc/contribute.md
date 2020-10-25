@@ -12,10 +12,12 @@ Goals
 * [ ] runs 'gently'
 * [ ] result makes users, modders and admins happy
 * [ ] seamless migration from older versions
+* [ ] callbacks and hooks...
 
 Drawer Cabinet
 ----------------
-* [x] add lock feature
+* [x] add lock feature.
+* [ ] Should this be a tool or is it fine like this with key-comobo? Could use existing key tool(s)
 * [x] move code away from entities so they are informative but not essential
     for drawers to work with tubes and other methods than manual.
 * [x] 'realtime' update of count change in drawer infotext
