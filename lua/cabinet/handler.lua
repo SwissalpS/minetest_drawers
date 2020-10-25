@@ -187,8 +187,6 @@ function Handler:player_put(tag_id, player)
 				self.locked[id] = 1
 				self.name[id] = item_name
 				self:write_meta()
-				minetest.chat_send_player(player_name,
-					S('Drawer assigned to @1', item_name))
 				changed = true
 			end
 		end -- if not locked
@@ -221,7 +219,6 @@ function Handler:player_take(tag_id, player)
 	if keys.aux1 then
 		if 1 == self.locked[id] then
 			self.locked[id] = 0
-			minetest.chat_send_player(player_name, S('Drawer unlocked'))
 			if 0 >= self.count[id] then
 				self.name[id] = ''
 				self.texture[id] = 'blank.png'
