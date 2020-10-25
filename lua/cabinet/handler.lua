@@ -346,15 +346,16 @@ function Handler:set_slots_per_drawer(slots_per_drawer)
 	if slots_per_drawer == self.slots_per_drawer then
 		return
 	end
+	-- assign new value
 	self.slots_per_drawer = slots_per_drawer
-
-	-- TODO: test if we need to copy this or if this is implicitly a copy
+	-- update max_count for all drwaers and update visuals
 	local id = self.drawer_count
 	repeat
 		self.max_count[id] = self.slots_per_drawer * self.item_stack_max[id]
 		self:update_visibles(id)
 		id = id - 1
 	until 0 == id
+	-- finalize changes
 	self:write_meta()
 end -- set_slots_per_drawer
 
@@ -394,6 +395,8 @@ function Handler:take_stack(tag_id)
 	return self:take_items(id, self.item_stack_max[id])
 end -- take_stack
 
+--- get texture string for tag with id tag_id.
+-- returns a string
 function Handler:texture_for(tag_id)
 	return self.texture[tonumber(tag_id)] or 'blank.png'
 end
@@ -443,6 +446,7 @@ end -- try_insert_stack
 --- update user visible indicators
 -- infotext and texture
 -- called whenever transaction happens and also at init of Handler object
+-- it does not write to meta, only to handler object tables.
 function Handler:update_visibles(tag_id)
 	local id = tonumber(tag_id)
 	local item_description = ''
@@ -482,6 +486,7 @@ function Handler:update_visibles(tag_id)
 		self.max_count[id],
 		locked_to)
 
+	-- last but not least, tell the tag to refresh
 	local tag = drawers.tag.map.tag_for(self.pos_cabinet, id)
 print('failed to get tag')
 	if not tag then
@@ -491,6 +496,9 @@ print('failed to get tag')
 	tag:update(self.infotext[id], self.texture[id])
 end -- update_visibles
 
+--- dump current state to cabinet's meta
+-- called whenever a change happens
+-- returns nil if not a valid handler object or true on success
 function Handler:write_meta()
 	if not self.is_valid then
 		return nil
