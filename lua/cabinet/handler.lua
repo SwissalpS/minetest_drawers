@@ -1,7 +1,6 @@
 --
 -- drawers/lua/cabinet/handler.lua
 --
-local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 local Base_Object = dofile(drawers.modpath .. '/lua/baseObject.lua')
 local Handler = Base_Object:extend()
 
@@ -481,11 +480,12 @@ function Handler:update_visibles(tag_id)
 		locked_to)
 
 	local tag = drawers.tag.map.tag_for(self.pos_cabinet, id)
-	if tag then
-		tag:update(self.infotext[id], self.texture[id])
-	else
 print('failed to get tag')
+	if not tag then
+		-- this does happen when area is loading
+		return
 	end
+	tag:update(self.infotext[id], self.texture[id])
 end -- update_visibles
 
 function Handler:write_meta()
