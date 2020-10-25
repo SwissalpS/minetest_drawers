@@ -5,6 +5,10 @@ local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 --local dc = drawers.cabinet -- keep commented if not actually used
 local dcab = drawers.cabinet
 
+-- register trim
+minetest.register_node('drawers:trim', drawers.trim.node_def)
+minetest.register_craft(drawers.trim.craft_def)
+
 -- cabinet registration function for node and recipe
 function drawers.cabinet.register(name, def)
 	def.collision_box = { type = 'regular' }

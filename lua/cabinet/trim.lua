@@ -3,8 +3,19 @@
 --
 local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 
+drawers.trim = {}
+
+drawers.trim.craft_def = {
+	output = 'drawers:trim 6',
+	recipe = {
+		{ 'group:stick', 'group:wood', 'group:stick' },
+		{ 'group:wood',  'group:wood',  'group:wood' },
+		{ 'group:stick', 'group:wood', 'group:stick' },
+	}
+}
+
 if drawers.has_mcl_core then
-	minetest.register_node('drawers:trim', {
+	drawers.trim.node_def = {
 		_mcl_blast_resistance = 15,
 		_mcl_hardness = 2,
 		description = S('Wooden Trim'),
@@ -18,9 +29,9 @@ if drawers.has_mcl_core then
 			wood = 1,
 		},
 		tiles = { 'drawers_trim.png' },
-	})
+	}
 else
-	minetest.register_node('drawers:trim', {
+	drawers.trim.node_def = {
 		description = S('Wooden Trim'),
 		groups = {
 			choppy = 3,
@@ -28,6 +39,6 @@ else
 			oddly_breakable_by_hand = 2,
 		},
 		tiles = { 'drawers_trim.png' },
-	})
+	}
 end
 
