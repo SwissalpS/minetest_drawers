@@ -118,13 +118,15 @@ function Handler:player_put(tag_id, player)
 	local item_name = self:item_name_for(id)
 	local keys = player:get_player_control()
 	local wielded_item = player:get_wielded_item()
+	local wielded_count = wielded_item:get_count()
+	local wielded_name = wielded_item:get_name()
 	-- When the player uses the drawer with their bare hand all
 	-- stacks from the inventory will be added to the drawer.
 	local leftover
 	-- if drawer is not empty or empty but locked
 	if '' ~= item_name
 		-- and player is holding nothing
-		and '' == wielded_item:get_name()
+		and '' == wielded_name
 		-- and not holding sneak
 		and not keys.sneak
 	then
@@ -150,9 +152,12 @@ function Handler:player_put(tag_id, player)
 		-- try to insert wielded item/stack only
 		leftover = self:try_insert_stack(tag_id, wielded_item, not keys.sneak)
 		-- check if something was added
-		if leftover:get_count() < wielded_item:get_count() then
+
+
+		if leftover:get_count() < wielded_count then
 			changed = true
-			item_name = wielded_item:get_name()
+			-- keep track of the name we may need if being locked
+			item_name = wielded_name
 		end
 		-- set the leftover as new wielded item for the player
 		player:set_wielded_item(leftover)
@@ -165,6 +170,7 @@ function Handler:player_put(tag_id, player)
 			-- don't lock drawers that don't have an item assigned yet
 			if 0 < #item_name then
 				self.locked[id] = 1
+				self.name[id] = item_name
 				self:write_meta()
 				minetest.chat_send_player(player_name,
 					S('Drawer assigned to @1', item_name))
@@ -175,7 +181,7 @@ function Handler:player_put(tag_id, player)
 	if changed then
 		self:update_visibles(id)
 	end
-	return changed, leftover
+	return changed
 end -- player_put
 
 -- called when a player punches the entity to take items
@@ -380,7 +386,7 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 	-- in case the drawer was empty, initialize count, itemName, maxCount
 	if '' == self:item_name_for(tag_id) then
 		self.count[id] = 0
-		local name = itemstack:get_name()
+		local name = stack:get_name()
 		local stack_max = minetest.registered_items[name].stack_max
 		self.name[id] = name
 		self.max_count[id] = stack_max * self.slots_per_drawer
@@ -393,12 +399,12 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 	self:write_meta()
 
 	-- return leftover
-	itemstack:take_item(insert_count)
+	stack:take_item(insert_count)
 	-- TODO: figure out why we can't give back a stack with zero count
-	if 0 == itemstack:get_count() then
+	if 0 == stack:get_count() then
 		return ItemStack('')
 	end
-	return itemstack
+	return stack
 end -- try_insert_stack
 
 -- don't actually tell visibles to update, just prepare what they need

@@ -72,13 +72,12 @@ print('tag:handle_use_put')
 	if not handler then
 		return
 	end
-	local changed, leftover = handler:player_put(self.tag_id, player)
+	local changed = handler:player_put(self.tag_id, player)
 	if changed then
 		-- we keep this as part of object for sound direction and possibly later
 		-- adding sounds per kind of item -- in years when sounds are not so expensive
 		self:play_interact_sound()
 	end
-	return leftover
 end -- drawers.tag.handle_use_put
 
 -- this is called when entity is activated for first time or reactivated.
@@ -136,7 +135,7 @@ function drawers.tag:on_activate(static_data_serialized, delta_seconds)
 	end
 
 	-- infotext
-	local infotext = handler:infotext_for(self.tag_id) .. '\n\n\n\n\n'
+	local infotext = handler:infotext_for(self.tag_id)
 	local texture = handler:texture_for(self.tag_id)
 	self.object:set_properties({
 		collisionbox = collisionbox,
@@ -163,7 +162,7 @@ end -- drawers.tag:play_interact_sound
 -- used in general to update infotext and texture
 function drawers.tag:update(new_infotext, new_texture)
 	self.object:set_properties({
-		infotext = new_infotext,-- .. '\n\n\n\n\n',
+		infotext = new_infotext,
 		textures = { new_texture },
 	})
 end -- drawers.tag:update
@@ -171,7 +170,7 @@ end -- drawers.tag:update
 -- used by cabinet when upgrades changed
 function drawers.tag:update_infotext(new_infotext)
 	self.object:set_properties({
-		infotext = new_infotext-- .. '\n\n\n\n\n',
+		infotext = new_infotext
 	})
 end -- drawers.tag:update_infotext
 

@@ -22,7 +22,7 @@ function drawers.tag.gui.generate_infotext(description, count, max_count, locked
 	if locked_to then
 		text = text .. '\13' .. S('Locked to: ') .. locked_to
 	end
-	return text
+	return text .. '\13\13\13\13\13'
 end -- drawers.tag.gui.generate_infotext
 
 function drawers.tag.gui.get_image(name)
