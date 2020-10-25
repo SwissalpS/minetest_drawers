@@ -19,11 +19,13 @@ local key_slots_per_drawer = 'slots_per_drawer'
 -- called by handler_for() when area is first loaded or some other mod cleared
 -- out some cached objects.
 function Handler:new(pos_cabinet)
+print('Handler:new')
 	self.is_valid = false
 	self.pos_cabinet = table.copy(pos_cabinet)
 	-- so all we check is that this instance was instantiated via handler_for
 	-- without skipping node check
 	if self:is_cabinet_missing() then
+print('Handler:new:no cabinet_node')
 		return nil
 	end
 	-- get meta
@@ -75,6 +77,7 @@ end
 --- Checks if the cabinet node actually exists
 -- returns boolean
 function Handler:is_cabinet_missing()
+print('Handler:is_cabinet_missing')
 	-- check if there is a node at all there
 	self.cabinet_node = minetest.get_node_or_nil(self.pos_cabinet)
 	if not self.cabinet_node then
@@ -269,7 +272,9 @@ end -- player_take
 -- If another mod wants to manipulate meta, theis is what to call to refresh it.
 -- updates visuals
 function Handler:read_meta()
+print('handler read_meta')
 	if not self.is_valid then
+print('Handler:read_meta:KO:not valid handler object')
 		-- TODO: do we need this check anymore?
 		--return nil
 	end
@@ -288,6 +293,7 @@ function Handler:read_meta()
 	local tag_id, name, stack_max, max_count
 	if needs_init then
 		-- must be initialized, probably drawer has only just been placed
+print('Handler:read_meta:new drawer was just placed')
 		self.slots_per_drawer = math.floor(
 			drawers.settings.base_slot_count / self.drawer_count)
 		stack_max = minetest.nodedef_default.stack_max or 99
@@ -488,9 +494,9 @@ function Handler:update_visibles(tag_id)
 
 	-- last but not least, tell the tag to refresh
 	local tag = drawers.tag.map.tag_for(self.pos_cabinet, id)
-print('failed to get tag')
 	if not tag then
 		-- this does happen when area is loading
+print('Handler:update_visibles:failed to get tag')
 		return
 	end
 	tag:update(self.infotext[id], self.texture[id])
@@ -500,7 +506,9 @@ end -- update_visibles
 -- called whenever a change happens
 -- returns nil if not a valid handler object or true on success
 function Handler:write_meta()
+print('Handler:write_meta')
 	if not self.is_valid then
+print('KO:Handler:write_meta:not a valid handler object')
 		return nil
 	end
 	local index = self.drawer_count
