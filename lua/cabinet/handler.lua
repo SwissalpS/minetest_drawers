@@ -44,7 +44,11 @@ end
 function Handler:how_many_can_insert(tag_id, stack)
 	local stack_count = stack:get_count()
 	local stack_name = stack:get_name()
-	if '' == stack_name or 0 >= stack_count then
+	-- no empty stacks or unknown items
+	if '' == stack_name
+		or 0 >= stack_count
+		or not minetest.registered_items[stack_name]
+	then
 		return 0
 	end
 	-- don't allow unstackable stacks
@@ -301,8 +305,22 @@ function Handler:read_meta()
 		repeat
 			tag_id = tostring(index)
 			name = self.meta:get_string(key_item_name .. tag_id)
-			stack_max = minetest.registered_items[name].stack_max
 			self.count[index] = self.meta:get_int(key_count .. tag_id)
+			if minetest.registered_items[name] then
+				stack_max = minetest.registered_items[name].stack_max
+			else
+				stack_max = 65535
+				-- log a warning to admins
+				local warning = '[drawers] ALERT: You have unknown items of type "'
+					.. name .. '" in a drawer at: '
+					.. minetest.pos_to_string(self.pos_cabinet)
+					.. ' drawer with tag id ' .. tag_id .. ' has '
+					.. tostring(self.count[index]) .. ' items. '
+					.. 'Setting max stack to 65535. Players can remove but '
+					.. 'not put more in.'
+				minetest.log('warning', warning)
+				print(warning)
+			end
 			self.infotext[index] = self.meta:get_string(key_infotext .. tag_id)
 			self.item_stack_max[index] = stack_max
 			self.name[index] = name
@@ -358,6 +376,8 @@ function Handler:take_items(tag_id, take_count)
 	return stack
 end -- take_items
 
+--- proxy to Handler:take_items()
+-- returns the stack that was removed from the drawer
 function Handler:take_stack(tag_id)
 	local id = tonumber(tag_id)
 	return self:take_items(id, self.item_stack_max[id])
@@ -367,7 +387,9 @@ function Handler:texture_for(tag_id)
 	return self.texture[tonumber(tag_id)] or 'blank.png'
 end
 
+--- insert as much as fits, even in neighboring drawers of the same cabinet.
 -- return what did not fit
+-- please use this route to insert items into drawers
 function Handler:try_insert_stack(tag_id, stack, insert_all)
 	-- make sure count is correct
 	local itemstack = ItemStack(stack)
