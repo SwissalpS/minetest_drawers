@@ -20,6 +20,8 @@ Drawer Cabinet
     for drawers to work with tubes and other methods than manual.
 * [x] 'realtime' update of count change in drawer infotext
 * [ ] global toggle for experimentals to allow stacks of upgrades in cabinets. drawers.settings.cabinet_upgrade_stack_max = 4
+* [x] allow removing unknown items really fast but don't allow putting them in drawers
+* [x] don't allow players to put in bigger stacks into empty drawers than can't even fit on a stack of that item; let alone a drawer without upgrades.
 
 Drawer Cabinet Pipeworks
 -------------------------
@@ -34,6 +36,8 @@ Drawer Controller Digiline
 -----------------------------
 * [~] allow taking also when drawer is 100% full (need to rewrite controller code for one, but had it working on an upstream version)
 * [ ] add command { command = 'has', name = 'mode:item' } that returns a boolean TODO figure out how exactly. bc next expansion requests will come
+* [ ] give correct item no matter which orientation the cabinet and controller have to each other.
+* [ ] tested with sonic screwdriver
 
 Drawer Controller Pipeworks
 -----------------------------
