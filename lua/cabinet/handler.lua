@@ -342,7 +342,10 @@ end -- read_meta
 -- updates visuals and writes to meta
 -- called when cabinet formspec is manipulated and maybe soon also by controller
 function Handler:set_slots_per_drawer(slots_per_drawer)
-
+	-- did anything actually change?
+	if slots_per_drawer == self.slots_per_drawer then
+		return
+	end
 	self.slots_per_drawer = slots_per_drawer
 
 	-- TODO: test if we need to copy this or if this is implicitly a copy
