@@ -135,17 +135,6 @@ function drawers.cabinet.drop_stack(pos_cabinet, stack)
 	minetest.item_drop(stack, nil, pos_drop)
 end -- drawers.cabinet.drop_stack
 
--- TODO: figure out what needs this or if we can drop it
--- Returns the content of a cabinet's drawer.
-function drawers.cabinet.get_content(pos, tag_id)
-	local meta = core.get_meta(pos)
-	return {
-		count = meta:get_int('count' .. tag_id),
-		name = meta:get_string('name' .. tag_id),
-		max_count = meta:get_int('max_count' .. tag_id),
-	}
-end -- drawers.cabinet.get_content
-
 -- Inserts an incoming stack into a specific drawer of a cabinet.
 function drawers.cabinet.insert_object(pos_cabinet, stack, tag_id)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)

@@ -36,6 +36,15 @@ print('Handler:new:no cabinet_node')
 	self:read_meta()
 end -- new
 
+--- table of 3 most important values of a drawer
+-- returns table with count, name and max_count fields
+function Handler:contents_for(tag_id)
+	return {
+		count = tonumber(self:count_for(tag_id)),
+		name = self:item_name_for(tag_id),
+		max_count = tonumber(self:max_count_for(tag_id)),
+	}
+end -- contents_for
 function Handler:count_for(tag_id)
 	return self.count[tonumber(tag_id)] or ''
 end
