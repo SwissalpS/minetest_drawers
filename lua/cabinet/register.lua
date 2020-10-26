@@ -3,7 +3,7 @@
 --
 local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 --local dc = drawers.cabinet -- keep commented if not actually used
-local dcab = drawers.cabinet
+--local dcab = drawers.cabinet
 
 -- register trim
 minetest.register_node('drawers:trim', drawers.trim.node_def)
@@ -16,10 +16,10 @@ function drawers.cabinet.register(name, def)
 	def.drawtype = 'nodebox'
 	def.groups = def.groups or {}
 	def.legacy_facedir_simple = true
-	def.node_box = { type = 'fixed', fixed = dcab.gui.node_box_simple }
+	def.node_box = { type = 'fixed', fixed = drawers.gui.node_box_simple }
 	def.paramtype = 'light'
 	def.paramtype2 = 'facedir'
-	def.selection_box = { type = 'fixed', fixed = dcab.gui.node_box_simple }
+	def.selection_box = { type = 'fixed', fixed = drawers.gui.node_box_simple }
 
 	-- events
 	def.allow_metadata_inventory_move = function() return 0 end

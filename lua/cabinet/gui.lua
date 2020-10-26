@@ -27,11 +27,3 @@ drawers.cabinet.gui.formspec = 'size[' .. list_width .. ',7]'
 	.. drawers.gui.slots
 	.. drawers.cabinet.gui.upgrade_slots_background(2, 0.5)
 
-drawers.cabinet.gui.node_box_simple = {
-	{ -0.5,    -0.5,    -0.4375, 0.5,     0.5,     0.5 },
-	{ -0.5,    -0.5,    -0.5,   -0.4375,  0.5,    -0.4375 },
-	{  0.4375, -0.5,    -0.5,    0.5,     0.5,    -0.4375 },
-	{ -0.4375,  0.4375, -0.5,    0.4375,  0.5,    -0.4375 },
-	{ -0.4375, -0.5,    -0.5,    0.4375, -0.4375, -0.4375 },
-}
-
