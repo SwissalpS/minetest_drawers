@@ -52,6 +52,11 @@ function Handler:count_for(tag_id)
 	return self.count[tonumber(tag_id)] or ''
 end --
 
+--- amount of space in drawer
+function Handler:free_space_for(tag_id)
+	return tonumber(self:max_count_for(tag_id)) - tonumber(self:count_for(tag_id))
+end --
+
 --- Inquire how much of stack fits in drawer.
 -- returns int >= 0
 -- called by pipeworks compatible nodes
