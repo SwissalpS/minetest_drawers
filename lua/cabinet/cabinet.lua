@@ -135,7 +135,8 @@ function drawers.cabinet.drop_stack(pos_cabinet, stack)
 	minetest.item_drop(stack, nil, pos_drop)
 end -- drawers.cabinet.drop_stack
 
--- Inserts an incoming stack into a specific drawer of a cabinet.
+--- Inserts an incoming stack into a specific drawer of a cabinet.
+-- TODO is this still used?
 function drawers.cabinet.insert_object(pos_cabinet, stack, tag_id)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then

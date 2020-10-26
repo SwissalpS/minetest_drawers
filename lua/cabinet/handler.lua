@@ -45,9 +45,12 @@ function Handler:contents_for(tag_id)
 		max_count = tonumber(self:max_count_for(tag_id)),
 	}
 end -- contents_for
+
+--- amount of items in drawer
+-- returns a string
 function Handler:count_for(tag_id)
 	return self.count[tonumber(tag_id)] or ''
-end
+end --
 
 --- Inquire how much of stack fits in drawer.
 -- returns int >= 0
