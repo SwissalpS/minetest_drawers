@@ -26,3 +26,11 @@ and the meta field:
 drawer_stack_max_factor -> drawers_max_stacks
 have been removed
 
+
+controller
+-----------
+changed digiline channel meta field
+digilineChannel -> channel
+changed meta field for net_index
+? -> net_index
+

@@ -1,3 +1,8 @@
+--
+--- drawers/lua/baseObject.lua
+-- copied without changes from rxi/lite
+-- https://raw.githubusercontent.com/rxi/lite/master/data/core/object.lua
+--
 local Object = {}
 Object.__index = Object
 

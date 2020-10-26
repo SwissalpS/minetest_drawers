@@ -34,6 +34,10 @@ Drawer Cabinet Pipeworks
 * [ ] tested with single/stack/digiline injectors into cabinet
 * [ ] tested with single/stack/digiline injectors out of cabinet
 
+Drawer Controller
+------------------
+* [ ] tested that does not include cabinets belonging to other players to network
+
 Drawer Controller Digiline
 -----------------------------
 * [~] allow taking also when drawer is 100% full (need to rewrite controller code for one, but had it working on an upstream version)
