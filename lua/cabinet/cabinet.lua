@@ -58,7 +58,7 @@ function drawers.cabinet.can_insert_stack(pos_cabinet, stack, tag_id)
 		-- this is unlikely to happen if called through node methods
 		return
 	end
-	return handler:how_many_can_insert(tag_id, stack)
+	return handler:how_many_can_insert_to_drawer(tag_id, stack)
 end -- drawers.cabinet.can_insert_stack
 
 -- Returns whether a stack can be (partially) inserted to any drawer of a cabinet.
@@ -66,17 +66,9 @@ function drawers.cabinet.can_insert_stack_from_tube(pos_cabinet, node, stack, di
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen if called through node methods
-		return
+		return false
 	end
-	local id = handler.drawer_count
-	repeat
-		if 0 < handler:how_many_can_insert(id, stack) then
-			return true
-		end
-		id = id - 1
-	until 0 == id
-
-	return false
+	return 0 < handler:how_many_can_insert(stack)
 end -- drawers.cabinet.can_insert_stack_from_tube
 
 -- is called when upgrades are changed
@@ -143,7 +135,7 @@ function drawers.cabinet.insert_object(pos_cabinet, stack, tag_id)
 		-- this is unlikely to happen
 		return
 	end
-	return handler:try_insert_stack(tag_id, stack, true)
+	return handler:try_insert_stack_to_drawer(tag_id, stack, true)
 end -- drawers.cabinet.insert_object
 
 -- Inserts an incoming stack into a cabinet and uses all drawers
@@ -151,30 +143,9 @@ function drawers.cabinet.insert_object_from_tube(pos_cabinet, node, stack, direc
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen
-		return
+		return stack
 	end
-
-	-- first try to insert in the correct drawer (if there are already items)
-	local leftover = stack
-	local item_name = stack:get_name()
-	local id = handler.drawer_count
-	repeat
-		if item_name == handler:item_name_for(id) then
-			leftover = handler:try_insert_stack(id, leftover, true)
-		end
-		id = id - 1
-	until 0 == id
-
-	-- if there's still something left, also use other drawers
-	if 0 < leftover:get_count() then
-		id = handler.drawer_count
-		repeat
-			leftover = handler:try_insert_stack(id, leftover, true)
-			id = id - 1
-		until 0 == id or 0 >= leftover:get_count()
-	end
--- TODO: make sure tags are updated
-	return leftover
+	return handler:try_insert_stack(stack)
 end -- drawers.cabinet.insert_object_from_tube
 
 function drawers.cabinet.on_construct(pos_cabinet)
@@ -210,7 +181,7 @@ function drawers.cabinet.on_dig(pos_cabinet, node, player)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen since, we are about to dig it
-		return
+		return 0
 	end
 
 	local count, name, stack_max, count_stacks, pos_rand

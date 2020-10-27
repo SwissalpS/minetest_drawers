@@ -57,10 +57,25 @@ function Handler:free_space_for(tag_id)
 	return tonumber(self:max_count_for(tag_id)) - tonumber(self:count_for(tag_id))
 end --
 
+--- Inquire how much of stack fits in cabinet
+function Handler:how_many_can_insert(stack)
+	local total = 0
+	local stack_count = stack:get_count()
+	local id = self.drawer_count
+	repeat
+		total = total + self:how_many_can_insert_to_drawer(id, stack)
+		if stack_count <= total then
+			return stack_count
+		end
+		id = id - 1
+	until 0 == id
+	return total
+end -- how_many_can_insert
+
 --- Inquire how much of stack fits in drawer.
 -- returns int >= 0
 -- called by pipeworks compatible nodes
-function Handler:how_many_can_insert(tag_id, stack)
+function Handler:how_many_can_insert_to_drawer(tag_id, stack)
 	local stack_count = stack:get_count()
 	local stack_name = stack:get_name()
 	-- no empty stacks or unknown items
@@ -85,7 +100,7 @@ function Handler:how_many_can_insert(tag_id, stack)
 	end
 	-- return how many would still have space
 	return self.max_count[id] - self.count[id]
-end -- how_many_can_insert
+end -- how_many_can_insert_to_drawer
 
 function Handler:infotext_for(tag_id)
 	return self.infotext[tonumber(tag_id)] or ''
@@ -166,7 +181,7 @@ function Handler:player_put(tag_id, player)
 		repeat
 			stack = inv:get_stack('main', i)
 			-- set current stack to leftover of insertion
-			leftover = self:try_insert_stack(tag_id, stack, true)
+			leftover = self:try_insert_stack_to_drawer(tag_id, stack, true)
 
 			-- check if something was added
 			if leftover:get_count() < stack:get_count() then
@@ -179,7 +194,7 @@ function Handler:player_put(tag_id, player)
 		until 0 == i
 	else
 		-- try to insert wielded item/stack only
-		leftover = self:try_insert_stack(tag_id, wielded_item, not keys.sneak)
+		leftover = self:try_insert_stack_to_drawer(tag_id, wielded_item, not keys.sneak)
 		-- check if something was added
 
 
@@ -427,14 +442,39 @@ end
 --- insert as much as fits, even in neighboring drawers of the same cabinet.
 -- return what did not fit
 -- please use this route to insert items into drawers
-function Handler:try_insert_stack(tag_id, stack, insert_all)
+function Handler:try_insert_stack(stack)
+	-- first try to insert in the correct drawer (if there are already items)
+	local leftover = stack
+	local item_name = stack:get_name()
+	local id = self.drawer_count
+	repeat
+		if item_name == self.name[id] then
+			leftover = self:try_insert_stack_to_drawer(id, leftover, true)
+		end
+		id = id - 1
+	until 0 == id
+
+	-- if there's still something left, also use other drawers
+	if 0 < leftover:get_count() then
+		id = self.drawer_count
+		repeat
+			leftover = self:try_insert_stack_to_drawer(id, leftover, true)
+			id = id - 1
+		until 0 == id or 0 >= leftover:get_count()
+	end
+	return leftover
+end -- try_insert_stack
+
+--- insert as much as fits into this drawer
+-- return what did not fit
+function Handler:try_insert_stack_to_drawer(tag_id, stack, insert_all)
 	-- make sure count is correct
 	local itemstack = ItemStack(stack)
 	if not insert_all then
 		itemstack:set_count(1)
 	end
 
-	local insert_count = self:how_many_can_insert(tag_id, itemstack)
+	local insert_count = self:how_many_can_insert_to_drawer(tag_id, itemstack)
 	-- no space, no action
 	if 0 == insert_count then
 		return stack
@@ -464,7 +504,7 @@ function Handler:try_insert_stack(tag_id, stack, insert_all)
 		return ItemStack('')
 	end
 	return stack
-end -- try_insert_stack
+end -- try_insert_stack_to_drawer
 
 --- update user visible indicators
 -- infotext and texture
