@@ -136,6 +136,7 @@ function drawers.tag.map.remove_for(pos_cabinet)
 
 	local luaentity, object
 	local index = #objects
+	if 0 == index then return end
 	repeat
 		object = objects[index]
 		luaentity = object:get_luaentity()

@@ -171,6 +171,7 @@ function drawers.controller.update_network_caches(pos_controller)
 			end -- if a cabinet
 			index = index - 1
 		until 0 == index
+	else
 	end
 	-- and stash this index for later reference
 	local meta = minetest.get_meta(pos_controller)
@@ -363,6 +364,7 @@ function drawers.controller.insert_to_empty_drawer(pos_controller, stack)
 end -- drawers.controller.insert_to_empty_drawer
 
 function drawers.controller.insert_to_drawers(pos_controller, stack)
+
 	local use_all = 0 < minetest.get_meta(pos_controller):get_int('use_all')
 	local item_name = stack:get_name()
 	local stack_count = stack:get_count()
@@ -675,7 +677,6 @@ print('controller_on_metadata_inventory_put')
 	if 'src' ~= list_name then
 		return
 	end
-
 	local inventory = minetest.get_meta(pos_controller):get_inventory()
 
 	local complete_stack = inventory:get_stack(list_name, 1)

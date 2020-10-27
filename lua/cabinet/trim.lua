@@ -41,6 +41,11 @@ else
 end
 
 drawers.trim.node_def.groups.drawers_connector = 1
-drawers.trim.node_def.after_destruct = drawers.controller.net_item_removed
-drawers.trim.node_def.on_construct = drawers.controller.net_item_placed
+drawers.trim.node_def.after_destruct = function(pos_trim)
+	return drawers.controller.net_item_removed(pos_trim)
+end
+
+drawers.trim.node_def.on_construct = function(pos_trim)
+	return drawers.controller.net_item_placed(pos_trim)
+end
 

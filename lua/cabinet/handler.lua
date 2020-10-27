@@ -118,8 +118,8 @@ print('Handler:is_cabinet_missing')
 	-- check that it is a drawers compatible node
 	-- TODO: we may need to do better check here
 	local node_def = minetest.registered_nodes[self.cabinet_node.name]
-	if not node_def then
-		return false
+	if not node_def or not node_def.groups or not node_def.groups.drawers then
+		return true
 	end -- if unknown item
 	self.drawer_count = node_def.groups.drawers
 	if not (0 < self.drawer_count) then

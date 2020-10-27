@@ -23,7 +23,9 @@ function drawers.cabinet.register(name, def)
 	def.selection_box = { type = 'fixed', fixed = drawers.gui.node_box_simple }
 
 	-- events
-	def.after_destruct = drawers.controller.net_item_removed
+	def.after_destruct = function(pos_trim)
+		return drawers.controller.net_item_removed(pos_trim)
+	end
 	def.allow_metadata_inventory_move = function() return 0 end
 	def.allow_metadata_inventory_put = drawers.cabinet.allow_upgrade_put
 	def.allow_metadata_inventory_take = drawers.cabinet.allow_upgrade_take
