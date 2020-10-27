@@ -24,7 +24,7 @@ function drawers.controller.gui.formspec(pos_controller)
 		.. 'listring[current_player;main]'
 		.. 'listring[current_name;src]'
 		.. 'listring[current_player;main]'
-		.. 'checkbox[0.7,2.6;use_all;' .. S('Use all drawers') .. ';'
+		.. 'checkbox[0.7,2.6;use_all;' .. S('Use all cabinets') .. ';'
 		.. use_all .. ']'
 
 	if drawers.has_digilines and drawers.has_pipeworks then
