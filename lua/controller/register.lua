@@ -120,6 +120,8 @@ def.allow_metadata_inventory_put = drawers.controller.allow_metadata_inventory_p
 def.allow_metadata_inventory_take = drawers.controller.allow_metadata_inventory_take
 
 def.can_dig = drawers.controller.can_dig
+-- also act as connector
+def.groups.drawers_connector = 1
 def.on_blast = drawers.controller.on_blast
 def.on_construct = drawers.controller.on_construct
 def.on_metadata_inventory_put = drawers.controller.on_metadata_inventory_put

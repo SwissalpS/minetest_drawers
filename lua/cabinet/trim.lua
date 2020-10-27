@@ -22,7 +22,6 @@ if drawers.has_mcl_core then
 		groups = {
 			axey = 1,
 			building_block = 1,
-			drawers_connector = 1,
 			flammable = 3,
 			handy = 1,
 			material_wood = 1,
@@ -35,13 +34,13 @@ else
 		description = S('Wooden Trim'),
 		groups = {
 			choppy = 3,
-			drawers_connector = 1,
 			oddly_breakable_by_hand = 2,
 		},
 		tiles = { 'drawers_trim.png' },
 	}
 end
 
+drawers.trim.node_def.groups.drawers_connector = 1
 drawers.trim.node_def.after_destruct = drawers.controller.net_item_removed
 drawers.trim.node_def.on_construct = drawers.controller.net_item_placed
 

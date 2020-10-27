@@ -15,6 +15,7 @@ function drawers.cabinet.register(name, def)
 	def.description = def.description or S('Wooden')
 	def.drawtype = 'nodebox'
 	def.groups = def.groups or {}
+	def.groups.drawers_connector = 1
 	def.legacy_facedir_simple = true
 	def.node_box = { type = 'fixed', fixed = drawers.gui.node_box_simple }
 	def.paramtype = 'light'
