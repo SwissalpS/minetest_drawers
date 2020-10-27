@@ -18,6 +18,8 @@ dofile(drawers.modpath .. '/lua/tag/init.lua')
 -- stores meta for drawers within a cabinet
 -- handles tube traffic
 dofile(drawers.modpath .. '/lua/cabinet/init.lua')
+-- load compactor
+dofile(drawers.modpath .. '/lua/compactor/init.lua')
 -- load controller code, register crafts and nodes
 -- stores cache of network
 -- handles tubes and digiline
