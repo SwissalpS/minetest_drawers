@@ -468,6 +468,7 @@ end -- drawers.controller.on_blast
 
 --- check if stack can be inserted
 -- called by inventory activity, when items are put into slot in formspec
+-- called also when tubes inquire about inserting items
 -- return amount of items that can be put (up to stacks count)
 function drawers.controller.allow_metadata_inventory_put(
 								pos_controller, list_name, index, stack, player)

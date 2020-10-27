@@ -52,5 +52,12 @@ Drawer Controller Pipeworks
 
 Drawer Controller Node formspec
 --------------------------------
-* [ ] add slot(s) for stach(s) of upgrades which can be distributed to cabinets
+* [ ] add slot(s) for stack(s) of upgrades which can be distributed to cabinets
+
+Drawer Compactor
+-----------------
+* [ ] have a working prototype
+* [ ] define recipe
+* [ ] figure out how it connects to the controller. Probably the controller needs to initiate the actions, that way it can distribute load to several compacters.
+* [ ] does it go through a hard coded list sorted by priority of which items it should compact and how much to leave uncompacted
 
