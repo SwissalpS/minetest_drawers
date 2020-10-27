@@ -114,6 +114,7 @@ else
 	}
 end -- if has pipeworks or not
 
+def.after_destruct = drawers.controller.net_item_removed
 def.allow_metadata_inventory_move = drawers.controller.allow_metadata_inventory_move
 def.allow_metadata_inventory_put = drawers.controller.allow_metadata_inventory_put
 def.allow_metadata_inventory_take = drawers.controller.allow_metadata_inventory_take

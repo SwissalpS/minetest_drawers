@@ -22,6 +22,7 @@ function drawers.cabinet.register(name, def)
 	def.selection_box = { type = 'fixed', fixed = drawers.gui.node_box_simple }
 
 	-- events
+	def.after_destruct = drawers.controller.net_item_removed
 	def.allow_metadata_inventory_move = function() return 0 end
 	def.allow_metadata_inventory_put = drawers.cabinet.allow_upgrade_put
 	def.allow_metadata_inventory_take = drawers.cabinet.allow_upgrade_take
@@ -42,7 +43,7 @@ function drawers.cabinet.register(name, def)
 		def.groups.tubedevice_receiver = 1
 		def.tube = def.tube or {}
 		def.tube.can_insert = def.tube.can_insert
-			or drawers.drawer_can_insert_stack_from_tube
+			or drawers.cabinet.can_insert_stack_from_tube
 
 		def.tube.connect_sides = {
 			back = 1, bottom = 1,

@@ -42,3 +42,6 @@ else
 	}
 end
 
+drawers.trim.node_def.after_destruct = drawers.controller.net_item_removed
+drawers.trim.node_def.on_construct = drawers.controller.net_item_placed
+

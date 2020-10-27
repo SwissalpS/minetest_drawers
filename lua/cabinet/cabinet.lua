@@ -187,6 +187,8 @@ function drawers.cabinet.on_construct(pos_cabinet)
 	-- spawn all tag entities
 	-- this also triggers handler object to be created
 	drawers.tag.map.spawn_for(pos_cabinet)
+	-- tell any nearby controllers about this new cabinet
+	drawers.controller.net_item_placed(pos_cabinet)
 end -- drawers.cabinet.on_construct
 
 -- destruct drawer
