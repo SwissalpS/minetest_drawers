@@ -52,6 +52,7 @@ function drawers.cabinet.allow_upgrade_take(pos_cabinet, list_name, index, stack
 end -- drawers.cabinet.allow_upgrade_take
 
 -- Returns how much (count) of a stack can be inserted to a cabinet drawer.
+-- TODO is this still used
 function drawers.cabinet.can_insert_stack(pos_cabinet, stack, tag_id)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
@@ -162,7 +163,7 @@ function drawers.cabinet.on_construct(pos_cabinet)
 	drawers.controller.net_item_placed(pos_cabinet)
 end -- drawers.cabinet.on_construct
 
--- destruct drawer
+-- destruct cabinet
 function drawers.cabinet.on_destruct(pos_cabinet)
 	-- remove the entities
 	drawers.tag.map.remove_for(pos_cabinet)

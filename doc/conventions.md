@@ -16,6 +16,8 @@ tag: this is the entity that displays texture and infotext of a drawer.
 controller: this node manipulates a network of cabinets. There can be multiple
     controllers in the same cabinet network. They offer a digiline interface
     and also take items from tubes and formspec inventory.
+compactor: this node makes blocks from ingots and in case of coal, clay and sulfur
+    from lumps too. May also add honey, cobbles and dirt.
 
 Whitespace
 -----------
@@ -56,6 +58,17 @@ dl        dcont        drawers.controller
 dt        dtag         drawers.tag
 dtk       dtkeys       drawers.tag.meta_keys
 du        dupg         drawers.upgrade
+
+other reserved variable names:
+id                refers to a drawer / tag id in numerical form
+tag_id            same as id but may be a string
+pos               not to be used unless it's ambiguous what it is position of
+                  e.g. contains_pos() and is_same_pos() functions
+pos_node          is to be used when node can be trim, cabinet, controller or compactor
+pos_cabinet       always used for cabinet coordinates
+pos_controller    always used for controller coordinates
+pos_compactor     always used for compactor coordinates
+index             numerical index in lists / tables
 
 Object Structur
 ---------------

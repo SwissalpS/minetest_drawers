@@ -37,6 +37,8 @@ Drawer Cabinet Pipeworks
 Drawer Controller
 ------------------
 * [ ] tested that does not include cabinets belonging to other players to network
+* [ ] tested that can't access cabinets that are no longer connected
+* [ ] tested that index is destroyed or updated when controller has been jumped with jumpdrive
 
 Drawer Controller Digiline
 -----------------------------
