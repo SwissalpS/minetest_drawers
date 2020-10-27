@@ -159,15 +159,19 @@ function drawers.controller.update_network_caches(pos_controller)
 	local all_conected = drawers.controller.find_connected(pos_controller)
 	-- now we need to clean out all but cabinet nodes
 	local all_cabinets = {}
-	local pos_cabinet, handler, id
+	local all_compactors = {}
+	local pos_node, handler, id
 	local index = #all_conected
 	if 0 < index then
 		repeat
-			pos_cabinet = all_conected[index]
-			handler = drawers.cabinet.handler_for(pos_cabinet)
+			pos_node = all_conected[index]
+			handler = drawers.cabinet.handler_for(pos_node)
 			-- only get valid handler for actual drawers, not trim or controller
 			if handler then
-				table.insert(all_cabinets, pos_cabinet)
+				table.insert(all_cabinets, pos_node)
+			else
+				-- TODO check if it's a compactor
+				table.insert(all_compactors, pos_node)
 			end -- if a cabinet
 			index = index - 1
 		until 0 == index
@@ -176,6 +180,7 @@ function drawers.controller.update_network_caches(pos_controller)
 	-- and stash this index for later reference
 	local meta = minetest.get_meta(pos_controller)
 	meta:set_string('cabinets', minetest.serialize(all_cabinets))
+	meta:set_string('compactors', minetest.serialize(all_compactors))
 	drawers.controller.scan_cabinets(pos_controller)
 end -- drawers.controller.update_network_caches
 
@@ -207,8 +212,11 @@ local function add_cabinet_to_index(pos_cabinet, net_index)
 		elseif free_space > net_index[item_name].p.s then
 			last_best = net_index[item_name].p
 			last_best.s = nil
-			table.append(net_index.a, last_best)
+			table.insert(net_index[item_name].a, last_best)
+			--net_index[item_name].a[#net_index[item_name].a + 1] = last_best
 			net_index[item_name].p = { c = pos_cabinet, s = free_space, i = id }
+		else
+			table.insert(net_index[item_name].a, { c = pos_cabinet, i = id })
 		end
 		id = id - 1
 	until 0 == id
@@ -524,7 +532,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 				repeat
 					pos_cabinet = item_index.a[index].c
 					if not contains_pos(checked, pos_cabinet) then
-						table.append(checked, table.copy(pos_cabinet))
+						table.insert(checked, table.copy(pos_cabinet))
 						handler = drawers.cabinet.handler_for(pos_cabinet)
 						if handler then
 							space_found = space_found
@@ -562,7 +570,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 						repeat
 							pos_cabinet = empty_index.a[index].c
 							if not contains_pos(checked, pos_cabinet) then
-								table.append(checked, table.copy(pos_cabinet))
+								table.insert(checked, table.copy(pos_cabinet))
 								handler = drawers.cabinet.handler_for(pos_cabinet)
 								if handler then
 									space_found = space_found
@@ -608,7 +616,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 				repeat
 					pos_cabinet = empty_index.a[index].c
 					if not contains_pos(checked, pos_cabinet) then
-						table.append(checked, table.copy(pos_cabinet))
+						table.insert(checked, table.copy(pos_cabinet))
 						handler = drawers.cabinet.handler_for(pos_cabinet)
 						if handler then
 							space_found = space_found
