@@ -104,10 +104,11 @@ end -- drawers.controller.allow_metadata_inventory_move
 function drawers.controller.allow_metadata_inventory_put(
 								pos_controller, list_name, index, stack, player)
 
-	if 'src' ~= list_name or not player then
+	if 'src' ~= list_name then
 		return 0
 	end
-	if minetest.is_protected(pos_controller, player:get_player_name()) then
+	-- when request is from tubes, then there is no player to check
+	if player and minetest.is_protected(pos_controller, player:get_player_name()) then
 		return 0
 	end
 	local space = drawers.controller.can_insert(pos_controller, stack)
@@ -135,9 +136,9 @@ function drawers.controller.can_dig(pos_controller, player)
 end
 
 function drawers.controller.can_insert(pos_controller, stack, have_scanned)
-	local use_all = 0 < minetest.get_meta(pos_controller):get_int('use_all')
 	local item_name = stack:get_name()
 	local meta = minetest.get_meta(pos_controller)
+	local use_all = 0 < meta:get_int('use_all')
 	local net_index = minetest.deserialize(meta:get_string('net_index'))
 	local item_index = net_index[item_name]
 	local empty_index = net_index[EMPTY]
@@ -431,7 +432,7 @@ function drawers.controller.on_construct(pos_controller)
 end -- drawers.controller.on_construct
 
 --- called after allow_metadata_inventory_put when player puts stack into
--- formspec inventory.
+-- formspec inventory or when tube inserts stack
 function drawers.controller.on_metadata_inventory_put(pos_controller, list_name,
 														index, stack, player)
 
@@ -442,8 +443,7 @@ print('controller_on_metadata_inventory_put')
 	local inventory = minetest.get_meta(pos_controller):get_inventory()
 
 	local complete_stack = inventory:get_stack(list_name, 1)
-	local leftover = drawers.controller.fill_net(pos_controller,
-															complete_stack)
+	local leftover = drawers.controller.fill_net(pos_controller, complete_stack)
 
 	inventory:set_stack(list_name, 1, leftover)
 end -- drawers.controller.on_metadata_inventory_put
@@ -463,7 +463,9 @@ function drawers.controller.on_receive_fields(pos_controller, formname, fields, 
 	end
 end -- drawers.controller.on_receive_fields
 
--- aka generate net_index using cached index of connected cabinets
+--- aka generate net_index using cached index of connected cabinets
+-- stores the map in meta and
+-- returns the table
 function drawers.controller.scan_cabinets(pos_controller)
 	local net_index = {}
 	local meta = minetest.get_meta(pos_controller)
@@ -476,7 +478,70 @@ function drawers.controller.scan_cabinets(pos_controller)
 		until 0 == index
 	end
 	meta:set_string('net_index', minetest.serialize(net_index))
+	return net_index
 end -- drawers.controller.scan_cabinets
+
+--- take from drawers according to settings
+-- if use_all is off, only the priority cabinet is checked for items
+-- if use_all is on, then items are gathered from any cabinet until request
+-- can be satisfied or there is nothing more to take
+function drawers.controller.take(pos_controller, stack)
+	local item_name = stack:get_name()
+	if not minetest.registered_items[item_name] then
+		return ItemStack()
+	end
+	-- the net_index is always out of date, so the easy fix is to scan again
+	-- any time items are requested. This saves us a lot of possible bugs like
+	-- the one where wrong items were returned.
+	-- SwissalpS thinks this makes a strong argument for keeping net_index in ram
+	-- instead of passing the list by serialize and deserialize
+	local net_index = drawers.controller.scan_cabinets(pos_controller)
+	local meta = minetest.get_meta(pos_controller)
+	--local net_index = minetest.deserialize(meta:get_string('net_index'))
+	local item_index = net_index[item_name]
+	if not item_index then
+		-- we can't do anything: the requested item doesn't exist
+		return ItemStack()
+	end
+	-- limit request to valid stack size, cabinet handler will do the same
+	local stack_max = minetest.registered_items[item_name].stack_max
+	local requested_count = math.min(stack:get_count(), stack_max)
+	local pos_cabinet = item_index.p.c
+	local taken_stack = drawers.cabinet.take(pos_cabinet, stack)
+	local taken_count = taken_stack:get_count()
+	local use_all = 0 < meta:get_int('use_all')
+	if taken_count == requested_count or (not use_all) then
+		return taken_stack
+	end
+	local index = #item_index.a
+	if 0 == index then
+		-- no alternatives, return what we got
+		return taken_stack
+	end
+	local checked = { pos_cabinet }
+	-- we initialize here with name and not with taken_stack because taken_stack
+	-- could have name of ''
+	local return_stack = ItemStack({ name = item_name, count = taken_count })
+	local count = requested_count - taken_count
+	stack:set_count(count)
+	repeat
+		pos_cabinet = item_index.a[index].c
+		if not contains_pos(checked, pos_cabinet) then
+			table.insert(checked, pos_cabinet)
+			taken_stack = drawers.cabinet.take(pos_cabinet, stack)
+			taken_count = taken_stack:get_count()
+			count = count - taken_count
+			stack:set_count(count)
+			-- we don't do return_stack:add(taken_stack) because taken_stack
+			-- could have name of ''
+			return_stack:set_count(return_stack:get_count() + taken_count)
+		end
+		index = index - 1
+	until 0 == index or 0 >= count
+	-- make sure name is set correctly
+	return_stack:set_name(item_name)
+	return return_stack
+end -- drawers.controller.take
 
 --- called when a cabinet, trim, controller or compactor is placed
 -- search for controllers in area and have them re-index

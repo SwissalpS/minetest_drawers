@@ -64,7 +64,7 @@ function Handler:can_insert_in(tag_id, stack)
 		-- no unknown items
 		or not minetest.registered_items[stack_name]
 		-- don't allow unstackable items
-		or 1 == stack:get_stack_max()
+		or 1 == minetest.registered_items[stack_name].stack_max
 	then
 		return 0
 	end
@@ -474,11 +474,17 @@ end
 -- updates visuals
 -- see also Handler:take_from(tag_id)
 function Handler:take(stack)
-	-- limit count to stack_max
-	local count = math.min(stack:get_count(), stack:get_stack_max())
-	local requested_count = count
+print('Handler:take', stack:to_string())
 	local item_name = stack:get_name()
-	local return_stack = ItemStack({ name = item_name, count = 0 })
+	local return_stack = ItemStack()
+	if not minetest.registered_items[item_name] then
+		-- not a valid item
+		return return_stack
+	end
+	-- limit count to stack_max
+	local stack_max = minetest.registered_items[item_name].stack_max
+	local count = math.min(stack:get_count(), stack_max)
+	local requested_count = count
 	local taken_stack, taken_count
 	local id = self.drawer_count
 	repeat
@@ -486,13 +492,11 @@ function Handler:take(stack)
 			taken_stack = self:take_from(id, count)
 			taken_count = taken_stack:get_count()
 			return_stack:set_count(return_stack:get_count() + taken_count)
-			if return_stack:get_count() >= requested_count then
-				return return_stack
-			end
 			count = count - taken_count
 		end
 		id = id - 1
-	until 0 == id
+	until 0 == id or return_stack:get_count() >= requested_count
+	return_stack:set_name(item_name)
 	return return_stack
 end -- take
 
@@ -502,8 +506,9 @@ end -- take
 -- see also Handler:take_stack_from(tag_id)
 function Handler:take_from(tag_id, take_count)
 	local id = tonumber(tag_id)
+	local stack = ItemStack()
 	if 0 >= self.count[id] then
-		return ItemStack()
+		return stack
 	end
 
 	if take_count > self.count[id] then
@@ -511,11 +516,9 @@ function Handler:take_from(tag_id, take_count)
 	end
 
 	local item_name = self.name[id]
-	local stack = ItemStack(item_name)
 	-- double check that we only give legal stack sizes
-	take_count = math.min(take_count, stack:get_stack_max())
-	stack:set_count(take_count)
-
+	take_count = math.min(take_count, self.item_stack_max[id])
+	stack = ItemStack({ name = item_name, count = take_count })
 	-- update everything
 	self.count[id] = self.count[id] - take_count
 	self:update_visibles_in(tag_id)
