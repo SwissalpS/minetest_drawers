@@ -408,6 +408,18 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 	return found_positions
 end -- drawers.controller.find_connected
 
+--- called when a cabinet, trim, controller or compactor is placed
+-- search for controllers in area and have them re-index
+function drawers.controller.net_item_placed(pos_node)
+	drawers.controller.update_controllers_near(pos_node)
+end --
+
+--- called when a cabinet, trim, controller or compactor is dug
+-- search for controllers in area and have them re-index
+function drawers.controller.net_item_removed(pos_node)
+	drawers.controller.update_controllers_near(pos_node)
+end --
+
 function drawers.controller.on_blast(pos_controller)
 	local drops = {}
 	default.get_inventory_drops(pos_controller, 'src', drops)
@@ -542,18 +554,6 @@ function drawers.controller.take(pos_controller, stack)
 	return_stack:set_name(item_name)
 	return return_stack
 end -- drawers.controller.take
-
---- called when a cabinet, trim, controller or compactor is placed
--- search for controllers in area and have them re-index
-function drawers.controller.net_item_placed(pos_node)
-	drawers.controller.update_controllers_near(pos_node)
-end --
-
---- called when a cabinet, trim, controller or compactor is dug
--- search for controllers in area and have them re-index
-function drawers.controller.net_item_removed(pos_node)
-	drawers.controller.update_controllers_near(pos_node)
-end --
 
 --- called when a cabinet, trim, controller or compactor is dug or placed
 function drawers.controller.update_controllers_near(pos_node)
