@@ -1,11 +1,6 @@
 --
 --- drawers/lua/controller/controller.lua
 --
-
--- TODO
--- add digiline command: has_item; only give bool back
--- test how orientation of controller to orientation of cabinets affects output
-
 local EMPTY = drawers.controller.key_empty
 
 --- helper for contains_pos()
@@ -46,6 +41,10 @@ local function pos_in_range(pos1, pos2)
 	return true
 end -- pos_in_range
 
+-- TODO SwissalpS wants to drop the caching of contents
+-- the cache is nearly always out of date and needs to be remade.
+-- It would be faster in most case just to ask each cabinet until space or items
+-- are found. Scanning all the cabinets first seems like overkill.
 local function add_cabinet_to_index(pos_cabinet, net_index)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
