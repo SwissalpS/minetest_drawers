@@ -490,7 +490,8 @@ print('controller_allow_metadata_inventory_put')
 	if minetest.is_protected(pos_controller, player:get_player_name()) then
 		return 0
 	end
-	return drawers.controller.has_space_for(pos_controller, stack)
+	local space = drawers.controller.has_space_for(pos_controller, stack)
+	return space
 end -- drawers.controller.allow_metadata_inventory_put
 
 function drawers.controller.has_space_for(pos_controller, stack, have_scanned)

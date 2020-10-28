@@ -78,20 +78,24 @@ end -- how_many_can_insert
 function Handler:how_many_can_insert_to_drawer(tag_id, stack)
 	local stack_count = stack:get_count()
 	local stack_name = stack:get_name()
-	-- no empty stacks or unknown items
+	-- no items without name
 	if '' == stack_name
+		-- no empty stacks
 		or 0 >= stack_count
+		-- no unknown items
 		or not minetest.registered_items[stack_name]
+		-- don't allow unstackable items
+		or 1 == stack:get_stack_max()
 	then
 		return 0
 	end
-	-- don't allow unstackable stacks
-	if 1 == stack:get_stack_max() then
-		return 0
-	end
+	-- convert possible string to integer
 	local id = tonumber(tag_id)
-	-- if attempting to put something else in this drawer
-	if '' ~= self.name[id] and stack_name ~= self.name[id] then
+	-- if this is not an empty drawer
+	if '' ~= self.name[id]
+		-- and item names do not match
+		and stack_name ~= self.name[id]
+	then
 		return 0
 	end
 	-- fits easily
@@ -450,9 +454,9 @@ function Handler:try_insert_stack(stack)
 	repeat
 		if item_name == self.name[id] then
 			leftover = self:try_insert_stack_to_drawer(id, leftover, true)
-		end
+		end -- if names match
 		id = id - 1
-	until 0 == id
+	until 0 == id or 0 >= leftover:get_count()
 
 	-- if there's still something left, also use other drawers
 	if 0 < leftover:get_count() then
@@ -500,7 +504,7 @@ function Handler:try_insert_stack_to_drawer(tag_id, stack, insert_all)
 	-- return leftover
 	stack:take_item(insert_count)
 	-- TODO: figure out why we can't give back a stack with zero count
-	if 0 == stack:get_count() then
+	if 0 >= stack:get_count() then
 		return ItemStack('')
 	end
 	return stack
