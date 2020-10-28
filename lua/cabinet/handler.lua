@@ -573,6 +573,9 @@ function Handler:update_visibles_in(tag_id)
 			-- not locked
 			self.name[id] = ''
 			self.texture[id] = 'blank.png'
+		else
+			-- had to add this for when server reboots
+			self.texture[id] = drawers.tag.gui.get_image(self.name[id])
 		end
 	elseif 'blank.png' == self:texture_in(id) then
 		-- contents changed to have a texture
