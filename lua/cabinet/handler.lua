@@ -589,7 +589,6 @@ function Handler:update_visibles_in(tag_id)
 	local tag = drawers.tag.map.tag_for(self.pos_cabinet, id)
 	if not tag then
 		-- this does happen when area is loading
-print('Handler:update_visibles:failed to get tag')
 		return
 	end
 	tag:update(self.infotext[id], self.texture[id])
