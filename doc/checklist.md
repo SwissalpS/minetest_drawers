@@ -138,3 +138,7 @@ Migration
 ----------
 * [ ] old drawer setups migrate correctly to new version
 
+Translation
+------------
+* [ ] translation files updated as far as can be done without knowing all the languages
+
