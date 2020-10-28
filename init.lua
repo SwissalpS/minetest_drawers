@@ -12,6 +12,8 @@ dofile(drawers.modpath .. '/lua/modDetection.lua')
 dofile(drawers.modpath .. '/lua/gui.lua')
 -- server settings and hard coded values
 dofile(drawers.modpath .. '/lua/settings.lua')
+-- load trim definition and register
+dofile(drawers.modpath .. '/lua/trim/init.lua')
 -- load tag code aka visual, the entity showing what is in drawer
 dofile(drawers.modpath .. '/lua/tag/init.lua')
 -- load cabinet code aka drawer node and trim, register crafts and nodes

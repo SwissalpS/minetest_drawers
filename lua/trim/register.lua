@@ -1,10 +1,10 @@
 --
--- register to cabinet connector, aka trim, node
+-- drawers/lua/trim/register.lua
 --
 local S, NS = dofile(drawers.modpath .. '/intllib.lua')
-
-drawers.trim = {}
-
+--
+-- register cabinet connector, aka trim, node
+--
 drawers.trim.craft_def = {
 	output = 'drawers:trim 6',
 	recipe = {
@@ -48,4 +48,8 @@ end
 drawers.trim.node_def.on_construct = function(pos_trim)
 	return drawers.controller.net_item_placed(pos_trim)
 end
+
+-- register trim
+minetest.register_node('drawers:trim', drawers.trim.node_def)
+minetest.register_craft(drawers.trim.craft_def)
 
