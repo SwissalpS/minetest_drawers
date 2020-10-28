@@ -3,6 +3,7 @@ Contributing to this branch of 2020 reboot
 [home of this effort on github is the TODO branch](https://SwissalpS.github.com/drawers/branch/)
 [conventions we are striving toward](conventions.md)
 [scratchpad of changes for migration](rewriteChanges.md)
+[checklist for testers](checklist.md)
 
 Currently reviewers and advisors are most wanted help to this effort.
 
@@ -17,13 +18,16 @@ Goals
 Drawer Cabinet
 ----------------
 * [x] add lock feature.
-* [ ] Should this be a tool or is it fine like this with key-comobo? Could use existing key tool(s)
+* [ ] Should this be done with a tool or is it fine like this with key-comobo?
+        Could use existing key tool(s)
 * [x] move code away from entities so they are informative but not essential
-    for drawers to work with tubes and other methods than manual.
+        for drawers to work with tubes and other methods than manual.
 * [x] 'realtime' update of count change in drawer infotext
-* [ ] global toggle for experimentals to allow stacks of upgrades in cabinets. drawers.settings.cabinet_upgrade_stack_max = 4
+* [ ] global toggle for experimentals to allow stacks of upgrades in cabinets.
+        drawers.settings.cabinet_upgrade_stack_max = 4
 * [x] allow removing unknown items really fast but don't allow putting them in drawers
-* [x] don't allow players to put in bigger stacks into empty drawers than can't even fit on a stack of that item; let alone a drawer without upgrades.
+* [x] don't allow players to put in bigger stacks into empty drawers than can't
+        even fit on a stack of that item; let alone a drawer without upgrades.
 
 Drawer Cabinet Pipeworks
 -------------------------
@@ -42,9 +46,12 @@ Drawer Controller
 
 Drawer Controller Digiline
 -----------------------------
-* [~] allow taking also when drawer is 100% full (need to rewrite controller code for one, but had it working on an upstream version)
-* [ ] add command { command = 'has', name = 'mode:item' } that returns a boolean TODO figure out how exactly. bc next expansion requests will come
-* [ ] give correct item no matter which orientation the cabinet and controller have to each other.
+* [~] allow taking also when drawer is 100% full (need to rewrite controller
+    code for one, but had it working on an upstream version)
+* [ ] add command { command = 'has', name = 'mode:item' } that returns a
+    boolean TODO figure out how exactly. bc next expansion requests will come
+* [ ] give correct item no matter which orientation the cabinet and controller
+    have to each other.
 * [ ] tested with sonic screwdriver
 
 Drawer Controller Pipeworks
@@ -58,6 +65,10 @@ Drawer Compactor
 -----------------
 * [ ] have a working prototype
 * [ ] define recipe
-* [ ] figure out how it connects to the controller. Probably the controller needs to initiate the actions, that way it can distribute load to several compacters.
-* [ ] does it go through a hard coded list sorted by priority of which items it should compact and how much to leave uncompacted
+* [ ] figure out how it connects to the controller. Probably the controller
+    needs to initiate the actions, that way it can distribute load to several
+    compactors.
+* [ ] does it go through a hard coded list sorted by priority of which items it
+    should compact and how much to leave uncompacted or do we need to offer
+    players options.
 
