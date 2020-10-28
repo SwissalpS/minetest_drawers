@@ -59,7 +59,7 @@ function drawers.cabinet.can_insert_stack(pos_cabinet, stack, tag_id)
 		-- this is unlikely to happen if called through node methods
 		return
 	end
-	return handler:how_many_can_insert_to_drawer(tag_id, stack)
+	return handler:can_insert_in(tag_id, stack)
 end -- drawers.cabinet.can_insert_stack
 
 -- Returns whether a stack can be (partially) inserted to any drawer of a cabinet.
@@ -69,7 +69,7 @@ function drawers.cabinet.can_insert_stack_from_tube(pos_cabinet, node, stack, di
 		-- this is unlikely to happen if called through node methods
 		return false
 	end
-	return 0 < handler:how_many_can_insert(stack)
+	return 0 < handler:can_insert(stack)
 end -- drawers.cabinet.can_insert_stack_from_tube
 
 -- is called when upgrades are changed
@@ -82,10 +82,10 @@ function drawers.cabinet.drop_overload(pos_cabinet)
 	local id = handler.drawer_count
 	local stack, item_name, count, max_count, item_stack_max, remove_count
 	repeat
-		count = handler:count_for(id)
-		item_name = handler:item_name_for(id)
-		item_stack_max = handler:item_stack_max_for(id)
-		max_count = handler:max_count_for(id)
+		count = handler:count_in(id)
+		item_name = handler:name_in(id)
+		item_stack_max = handler:stack_max_in(id)
+		max_count = handler:max_count_in(id)
 		-- drop stacks until there are no more items than allowed
 		while count > max_count do
 			-- remove the overflow
@@ -102,7 +102,7 @@ function drawers.cabinet.drop_overload(pos_cabinet)
 		end
 		-- TODO: this is not nice to modify from here
 		handler.count[id] = count
-		handler:update_visibles(id)
+		handler:update_visibles_in(id)
 		id = id - 1
 	until 0 == id
 	handler:write_meta()
@@ -136,7 +136,7 @@ function drawers.cabinet.insert_object(pos_cabinet, stack, tag_id)
 		-- this is unlikely to happen
 		return
 	end
-	return handler:try_insert_stack_to_drawer(tag_id, stack, true)
+	return handler:fill_drawer(tag_id, stack, true)
 end -- drawers.cabinet.insert_object
 
 -- Inserts an incoming stack into a cabinet and uses all drawers
@@ -146,7 +146,7 @@ function drawers.cabinet.insert_object_from_tube(pos_cabinet, node, stack, direc
 		-- this is unlikely to happen
 		return stack
 	end
-	return handler:try_insert_stack(stack)
+	return handler:fill_cabinet(stack)
 end -- drawers.cabinet.insert_object_from_tube
 
 function drawers.cabinet.on_construct(pos_cabinet)
@@ -193,9 +193,9 @@ function drawers.cabinet.on_dig(pos_cabinet, node, player)
 	--		calculations for something trivial like this. There are also other
 	--		ways to avoid checking here more than a flag.
 	repeat
-		count = handler:count_for(id)
-		name = handler:item_name_for(id)
-		stack_max = handler:item_stack_max_for(id)
+		count = handler:count_in(id)
+		name = handler:name_in(id)
+		stack_max = handler:stack_max_in(id)
 
 		count_stacks = math.floor(count / stack_max) + 1
 		-- TODO: test if this works when empty, in could, as we + 1
@@ -251,8 +251,8 @@ function drawers.cabinet.take_item(pos_cabinet, stack)
 	local name = stack:get_name()
 	local id = handler.drawer_count
 	repeat
-		if handler:item_name_for(id) == name then
-			return handler:take_items(id, count)
+		if handler:name_in(id) == name then
+			return handler:take_items_in(id, count)
 		end
 		id = id - 1
 	until 0 == id
@@ -301,7 +301,7 @@ function drawers.cabinet.upgrade_update(pos_cabinet, list_name)
 
 	local id = #tags
 	repeat
-		tags[id]:update_infotext(handler:infotext_for(id))
+		tags[id]:update_infotext(handler:infotext_in(id))
 		id = id - 1
 	until 0 == id
 

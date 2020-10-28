@@ -38,44 +38,44 @@ end -- new
 
 --- table of 3 most important values of a drawer
 -- returns table with count, name and max_count fields
-function Handler:contents_for(tag_id)
+function Handler:contents_in(tag_id)
 	return {
-		count = tonumber(self:count_for(tag_id)),
-		name = self:item_name_for(tag_id),
-		max_count = tonumber(self:max_count_for(tag_id)),
+		count = tonumber(self:count_in(tag_id)),
+		name = self:name_in(tag_id),
+		max_count = tonumber(self:max_count_in(tag_id)),
 	}
-end -- contents_for
+end -- contents_in
 
 --- amount of items in drawer
 -- returns a string
-function Handler:count_for(tag_id)
+function Handler:count_in(tag_id)
 	return self.count[tonumber(tag_id)] or ''
 end --
 
 --- amount of space in drawer
-function Handler:free_space_for(tag_id)
-	return tonumber(self:max_count_for(tag_id)) - tonumber(self:count_for(tag_id))
+function Handler:free_space_in(tag_id)
+	return tonumber(self:max_count_in(tag_id)) - tonumber(self:count_in(tag_id))
 end --
 
 --- Inquire how much of stack fits in cabinet
-function Handler:how_many_can_insert(stack)
+function Handler:can_insert(stack)
 	local total = 0
 	local stack_count = stack:get_count()
 	local id = self.drawer_count
 	repeat
-		total = total + self:how_many_can_insert_to_drawer(id, stack)
+		total = total + self:can_insert_in(id, stack)
 		if stack_count <= total then
 			return stack_count
 		end
 		id = id - 1
 	until 0 == id
 	return total
-end -- how_many_can_insert
+end -- can_insert
 
 --- Inquire how much of stack fits in drawer.
 -- returns int >= 0
 -- called by pipeworks compatible nodes
-function Handler:how_many_can_insert_to_drawer(tag_id, stack)
+function Handler:can_insert_in(tag_id, stack)
 	local stack_count = stack:get_count()
 	local stack_name = stack:get_name()
 	-- no items without name
@@ -104,9 +104,9 @@ function Handler:how_many_can_insert_to_drawer(tag_id, stack)
 	end
 	-- return how many would still have space
 	return self.max_count[id] - self.count[id]
-end -- how_many_can_insert_to_drawer
+end -- can_insert_in
 
-function Handler:infotext_for(tag_id)
+function Handler:infotext_in(tag_id)
 	return self.infotext[tonumber(tag_id)] or ''
 end
 
@@ -132,19 +132,20 @@ print('Handler:is_cabinet_missing')
 	return false
 end -- is_cabinet_missing
 
-function Handler:item_name_for(tag_id)
+function Handler:name_in(tag_id)
 	return self.name[tonumber(tag_id)] or ''
 end
 
-function Handler:item_stack_max_for(tag_id)
+function Handler:stack_max_in(tag_id)
 	return self.item_stack_max[tonumber(tag_id)] or 0
 end
 
-function Handler:locked_for(tag_id)
+-- seems like not used (yet)
+function Handler:locked_in(tag_id)
 	return self.locked[tonumber(tag_id)] or 0
 end
 
-function Handler:max_count_for(tag_id)
+function Handler:max_count_in(tag_id)
 	return self.max_count[tonumber(tag_id)] or 0
 end
 
@@ -163,7 +164,7 @@ function Handler:player_put(tag_id, player)
 	-- used to check if we need to play a sound in the end
 	local changed = false
 	local id = tonumber(tag_id)
-	local item_name = self:item_name_for(id)
+	local item_name = self:name_in(id)
 	local keys = player:get_player_control()
 	local wielded_item = player:get_wielded_item()
 	local wielded_count = wielded_item:get_count()
@@ -185,7 +186,7 @@ function Handler:player_put(tag_id, player)
 		repeat
 			stack = inv:get_stack('main', i)
 			-- set current stack to leftover of insertion
-			leftover = self:try_insert_stack_to_drawer(tag_id, stack, true)
+			leftover = self:fill_drawer(tag_id, stack, true)
 
 			-- check if something was added
 			if leftover:get_count() < stack:get_count() then
@@ -198,7 +199,7 @@ function Handler:player_put(tag_id, player)
 		until 0 == i
 	else
 		-- try to insert wielded item/stack only
-		leftover = self:try_insert_stack_to_drawer(tag_id, wielded_item, not keys.sneak)
+		leftover = self:fill_drawer(tag_id, wielded_item, not keys.sneak)
 		-- check if something was added
 
 
@@ -225,7 +226,7 @@ function Handler:player_put(tag_id, player)
 		end -- if not locked
 	end -- if keys.aux1
 	if changed then
-		self:update_visibles(id)
+		self:update_visibles_in(id)
 	end
 	return changed
 end -- player_put
@@ -289,9 +290,9 @@ function Handler:player_take(tag_id, player)
 
 	local stack
 	if stackwize then
-		stack = self:take_stack(tag_id)
+		stack = self:take_stack_in(tag_id)
 	else
-		stack = self:take_items(tag_id, 1)
+		stack = self:take_items_in(tag_id, 1)
 	end
 
 	if stack then
@@ -340,7 +341,7 @@ print('Handler:read_meta:new drawer was just placed')
 			self.locked[index] = 0
 			self.max_count[index] = max_count
 			self.name[index] = ''
-			self:update_visibles(index)
+			self:update_visibles_in(index)
 			index = index - 1
 		until 0 == index
 		-- probably good idea to save meta at this point
@@ -372,7 +373,7 @@ print('Handler:read_meta:new drawer was just placed')
 			self.locked[index] = self.meta:get_int(key_locked .. tag_id)
 			self.max_count[index] = stack_max * self.slots_per_drawer
 
-			self:update_visibles(index)
+			self:update_visibles_in(index)
 
 			index = index - 1
 		until 0 == index -- loop all drawers of this cabinet into object fields
@@ -394,7 +395,7 @@ function Handler:set_slots_per_drawer(slots_per_drawer)
 	local id = self.drawer_count
 	repeat
 		self.max_count[id] = self.slots_per_drawer * self.item_stack_max[id]
-		self:update_visibles(id)
+		self:update_visibles_in(id)
 		id = id - 1
 	until 0 == id
 	-- finalize changes
@@ -404,8 +405,8 @@ end -- set_slots_per_drawer
 --- take requested amount out of drawer with id tag_id or as much as is in there
 -- returns stack of taken items
 -- updates visuals
--- see also Handler:take_stack(tag_id)
-function Handler:take_items(tag_id, take_count)
+-- see also Handler:take_stack_in(tag_id)
+function Handler:take_items_in(tag_id, take_count)
 	local id = tonumber(tag_id)
 	if 0 >= self.count[id] then
 		return nil
@@ -423,37 +424,37 @@ function Handler:take_items(tag_id, take_count)
 	-- update everything
 	-- TODO: optimize, we are taking out, only need to update infotext mostly
 	self.count[id] = self.count[id] - take_count
-	self:update_visibles(tag_id)
+	self:update_visibles_in(tag_id)
 	self:write_meta()
 
 	-- return the stack that was removed from the drawer
 	return stack
-end -- take_items
+end -- take_items_in
 
---- proxy to Handler:take_items(tag_id, take_count)
+--- proxy to Handler:take_items_in(tag_id, take_count)
 -- returns the stack that was removed from the drawer
-function Handler:take_stack(tag_id)
+function Handler:take_stack_in(tag_id)
 	local id = tonumber(tag_id)
-	return self:take_items(id, self.item_stack_max[id])
-end -- take_stack
+	return self:take_items_in(id, self.item_stack_max[id])
+end -- take_stack_in
 
 --- get texture string for tag with id tag_id.
 -- returns a string
-function Handler:texture_for(tag_id)
+function Handler:texture_in(tag_id)
 	return self.texture[tonumber(tag_id)] or 'blank.png'
 end
 
 --- insert as much as fits, even in neighboring drawers of the same cabinet.
 -- return what did not fit
 -- please use this route to insert items into drawers
-function Handler:try_insert_stack(stack)
+function Handler:fill_cabinet(stack)
 	-- first try to insert in the correct drawer (if there are already items)
 	local leftover = stack
 	local item_name = stack:get_name()
 	local id = self.drawer_count
 	repeat
 		if item_name == self.name[id] then
-			leftover = self:try_insert_stack_to_drawer(id, leftover, true)
+			leftover = self:fill_drawer(id, leftover, true)
 		end -- if names match
 		id = id - 1
 	until 0 == id or 0 >= leftover:get_count()
@@ -462,23 +463,23 @@ function Handler:try_insert_stack(stack)
 	if 0 < leftover:get_count() then
 		id = self.drawer_count
 		repeat
-			leftover = self:try_insert_stack_to_drawer(id, leftover, true)
+			leftover = self:fill_drawer(id, leftover, true)
 			id = id - 1
 		until 0 == id or 0 >= leftover:get_count()
 	end
 	return leftover
-end -- try_insert_stack
+end -- fill_cabinet
 
 --- insert as much as fits into this drawer
 -- return what did not fit
-function Handler:try_insert_stack_to_drawer(tag_id, stack, insert_all)
+function Handler:fill_drawer(tag_id, stack, insert_all)
 	-- make sure count is correct
 	local itemstack = ItemStack(stack)
 	if not insert_all then
 		itemstack:set_count(1)
 	end
 
-	local insert_count = self:how_many_can_insert_to_drawer(tag_id, itemstack)
+	local insert_count = self:can_insert_in(tag_id, itemstack)
 	-- no space, no action
 	if 0 == insert_count then
 		return stack
@@ -487,7 +488,7 @@ function Handler:try_insert_stack_to_drawer(tag_id, stack, insert_all)
 	local id = tonumber(tag_id)
 
 	-- in case the drawer was empty, initialize count, itemName, maxCount
-	if '' == self:item_name_for(tag_id) then
+	if '' == self:name_in(tag_id) then
 		self.count[id] = 0
 		local name = stack:get_name()
 		local stack_max = minetest.registered_items[name].stack_max
@@ -498,7 +499,7 @@ function Handler:try_insert_stack_to_drawer(tag_id, stack, insert_all)
 
 	-- update everything
 	self.count[id] = self.count[id] + insert_count
-	self:update_visibles(tag_id)
+	self:update_visibles_in(tag_id)
 	self:write_meta()
 
 	-- return leftover
@@ -508,13 +509,13 @@ function Handler:try_insert_stack_to_drawer(tag_id, stack, insert_all)
 		return ItemStack('')
 	end
 	return stack
-end -- try_insert_stack_to_drawer
+end -- fill_drawer
 
 --- update user visible indicators
 -- infotext and texture
 -- called whenever transaction happens and also at init of Handler object
 -- it does not write to meta, only to handler object tables.
-function Handler:update_visibles(tag_id)
+function Handler:update_visibles_in(tag_id)
 	local id = tonumber(tag_id)
 	local item_description = ''
 	local item_def = minetest.registered_items[self.name[id]]
@@ -542,7 +543,7 @@ function Handler:update_visibles(tag_id)
 			self.name[id] = ''
 			self.texture[id] = 'blank.png'
 		end
-	elseif 'blank.png' == self:texture_for(id) then
+	elseif 'blank.png' == self:texture_in(id) then
 		-- contents changed to have a texture
 		self.texture[id] = drawers.tag.gui.get_image(self.name[id])
 	end -- if empty or not
@@ -561,7 +562,7 @@ print('Handler:update_visibles:failed to get tag')
 		return
 	end
 	tag:update(self.infotext[id], self.texture[id])
-end -- update_visibles
+end -- update_visibles_in
 
 --- dump current state to cabinet's meta
 -- called whenever a change happens

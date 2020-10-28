@@ -92,7 +92,7 @@ function drawers.controller.add_cabinet_to_inventory(cabinet_inventory, pos_cabi
 	local item_name, override, handler2, index_cabinet2, space2
 	local id = handler.drawer_count
 	repeat
-		item_name = handler:item_name_for(id)
+		item_name = handler:name_in(id)
 		if '' == item_name and not cabinet_inventory[EMPTY] then
 			cabinet_inventory[EMPTY] = index_drawer(pos_cabinet, id)
 		elseif '' ~= item_name then
@@ -107,8 +107,8 @@ function drawers.controller.add_cabinet_to_inventory(cabinet_inventory, pos_cabi
 					-- TODO may need some cleanup of stray entities here
 					override = true
 				else
-					space2 = handler2:free_space_for(index_cabinet2.tag_id)
-					override = space2 < handler:free_space_for(id)
+					space2 = handler2:free_space_in(index_cabinet2.tag_id)
+					override = space2 < handler:free_space_in(id)
 				end
 			end
 			-- If the already indexed drawer has less space, we override the
@@ -195,11 +195,11 @@ local function add_cabinet_to_index(pos_cabinet, net_index)
 	local last_best
 	local id = handler.drawer_count
 	repeat
-		item_name = handler:item_name_for(id)
+		item_name = handler:name_in(id)
 		if '' == item_name then
 			item_name = EMPTY
 		end
-		free_space = handler:free_space_for(id)
+		free_space = handler:free_space_in(id)
 		if not net_index[item_name] then
 			net_index[item_name] = {
 				-- using short field names as this table will be in meta
@@ -317,8 +317,8 @@ function drawers.controller.get_drawer_index(pos_controller, item_name)
 		local entry = net_index[item_name]
 		local handler = drawers.cabinet.handler_for(entry.pos_cabinet, true)
 		if handler then
-			if handler:item_name_for(entry.tag_id) ~= item_name
-				or 0 >= handler:free_space_for(entry.tag_id)
+			if handler:name_in(entry.tag_id) ~= item_name
+				or 0 >= handler:free_space_in(entry.tag_id)
 			then
 				-- if there is none with less content, this one will be added again
 				scan_needed = true
@@ -356,8 +356,8 @@ function drawers.controller.insert_to_empty_drawer(pos_controller, stack)
 	-- TODO add support for locked drawers that may be just as empty.
 	--	possibly this is not required though, as the locked ones would be found
 	--	and filled first
-	if '' == handler:item_name_for(tag_id) then
-		local leftover = handler:try_insert_stack(tag_id, stack, true)
+	if '' == handler:name_in(tag_id) then
+		local leftover = handler:fill_cabinet(tag_id, stack, true)
 
 		-- Add the item to the drawers table index and set the empty one to nil
 		net_index[EMPTY] = nil
@@ -393,7 +393,7 @@ function drawers.controller.insert_to_drawers(pos_controller, stack)
 			-- should not happen, but if it does we fail silently
 			return leftover
 		end
-		leftover = handler:try_insert_stack(leftover)
+		leftover = handler:fill_cabinet(leftover)
 		if not use_all or 0 >= leftover:get_count() then
 			return leftover
 		end
@@ -405,7 +405,7 @@ function drawers.controller.insert_to_drawers(pos_controller, stack)
 				if not contains_pos(checked, pos_cabinet) then
 					handler = drawers.cabinet.handler_for(pos_cabinet)
 					if handler then
-						leftover = handler:try_insert_stack(leftover)
+						leftover = handler:fill_cabinet(leftover)
 						if 0 >= leftover:get_count() then
 							return leftover
 						end
@@ -424,7 +424,7 @@ function drawers.controller.insert_to_drawers(pos_controller, stack)
 			-- should not happen, but if it does we fail silently
 			return leftover
 		end
-		leftover = handler:try_insert_stack(leftover)
+		leftover = handler:fill_cabinet(leftover)
 		if not use_all or 0 >= leftover:get_count() then
 			return leftover
 		end
@@ -436,7 +436,7 @@ function drawers.controller.insert_to_drawers(pos_controller, stack)
 				if not contains_pos(checked, pos_cabinet) then
 					handler = drawers.cabinet.handler_for(pos_cabinet)
 					if handler then
-						leftover = handler:try_insert_stack(leftover)
+						leftover = handler:fill_cabinet(leftover)
 						if 0 >= leftover:get_count() then
 							return leftover
 						end
@@ -518,7 +518,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 		pos_cabinet = item_index.p.c
 		handler = drawers.cabinet.handler_for(pos_cabinet)
 		if handler then
-			space_found = handler:how_many_can_insert(stack)
+			space_found = handler:can_insert(stack)
 			if space_found >= stack_count then
 				return stack_count
 			end
@@ -537,7 +537,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 						handler = drawers.cabinet.handler_for(pos_cabinet)
 						if handler then
 							space_found = space_found
-								+ handler:how_many_can_insert(stack)
+								+ handler:can_insert(stack)
 
 							if space_found >= stack_count then
 								return stack_count
@@ -559,7 +559,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 				pos_cabinet = empty_index.p.c
 				handler = drawers.cabinet.handler_for(pos_cabinet)
 				if handler then
-					space_found = space_found + handler:how_many_can_insert(stack)
+					space_found = space_found + handler:can_insert(stack)
 					if space_found >= stack_count then
 						return stack_count
 					end
@@ -575,7 +575,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 								handler = drawers.cabinet.handler_for(pos_cabinet)
 								if handler then
 									space_found = space_found
-										+ handler:how_many_can_insert(stack)
+										+ handler:can_insert(stack)
 
 									if space_found >= stack_count then
 										return stack_count
@@ -602,7 +602,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 		pos_cabinet = empty_index.p.c
 		handler = drawers.cabinet.handler_for(pos_cabinet)
 		if handler then
-			space_found = handler:how_many_can_insert(stack)
+			space_found = handler:can_insert(stack)
 			if space_found >= stack_count then
 				return stack_count
 			end
@@ -621,7 +621,7 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 						handler = drawers.cabinet.handler_for(pos_cabinet)
 						if handler then
 							space_found = space_found
-								+ handler:how_many_can_insert(stack)
+								+ handler:can_insert(stack)
 
 							if space_found >= stack_count then
 								return stack_count

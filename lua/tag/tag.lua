@@ -134,8 +134,8 @@ function drawers.tag:on_activate(static_data_serialized, delta_seconds)
 	end
 
 	-- infotext
-	local infotext = handler:infotext_for(self.tag_id)
-	local texture = handler:texture_for(self.tag_id)
+	local infotext = handler:infotext_in(self.tag_id)
+	local texture = handler:texture_in(self.tag_id)
 	self.object:set_properties({
 		collisionbox = collisionbox,
 		infotext = infotext,
