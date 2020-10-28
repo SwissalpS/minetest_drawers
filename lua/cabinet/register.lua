@@ -46,7 +46,7 @@ function drawers.cabinet.register(name, def)
 		def.groups.tubedevice_receiver = 1
 		def.tube = def.tube or {}
 		def.tube.can_insert = def.tube.can_insert
-			or drawers.cabinet.can_insert_stack_from_tube
+			or drawers.cabinet.can_insert
 
 		def.tube.connect_sides = {
 			back = 1, bottom = 1,
@@ -54,7 +54,7 @@ function drawers.cabinet.register(name, def)
 		}
 
 		def.tube.insert_object = def.tube.insert_object
-			or drawers.cabinet.insert_object_from_tube
+			or drawers.cabinet.fill_cabinet
 
 	end -- if has pipeworks installed
 

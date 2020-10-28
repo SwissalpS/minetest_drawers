@@ -353,9 +353,9 @@ function Handler:player_take(tag_id, player)
 
 	local stack
 	if stackwize then
-		stack = self:take_stack_in(tag_id)
+		stack = self:take_stack_from(tag_id)
 	else
-		stack = self:take_items_in(tag_id, 1)
+		stack = self:take_from(tag_id, 1)
 	end
 
 	if stack then
@@ -469,14 +469,41 @@ function Handler:stack_max_in(tag_id)
 	return self.item_stack_max[tonumber(tag_id)] or 0
 end
 
+--- take requested amount out of cabinet (using all drawers) or as much as possible
+-- returns stack of taken items
+-- updates visuals
+-- see also Handler:take_from(tag_id)
+function Handler:take(stack)
+	-- limit count to stack_max
+	local count = math.min(stack:get_count(), stack:get_stack_max())
+	local requested_count = count
+	local item_name = stack:get_name()
+	local return_stack = ItemStack({ name = item_name, count = 0 })
+	local taken_stack, taken_count
+	local id = self.drawer_count
+	repeat
+		if item_name == self.name[id] then
+			taken_stack = self:take_from(id, count)
+			taken_count = taken_stack:get_count()
+			return_stack:set_count(return_stack:get_count() + taken_count)
+			if return_stack:get_count() >= requested_count then
+				return return_stack
+			end
+			count = count - taken_count
+		end
+		id = id - 1
+	until 0 == id
+	return return_stack
+end -- take
+
 --- take requested amount out of drawer with id tag_id or as much as is in there
 -- returns stack of taken items
 -- updates visuals
--- see also Handler:take_stack_in(tag_id)
-function Handler:take_items_in(tag_id, take_count)
+-- see also Handler:take_stack_from(tag_id)
+function Handler:take_from(tag_id, take_count)
 	local id = tonumber(tag_id)
 	if 0 >= self.count[id] then
-		return nil
+		return ItemStack()
 	end
 
 	if take_count > self.count[id] then
@@ -485,25 +512,25 @@ function Handler:take_items_in(tag_id, take_count)
 
 	local item_name = self.name[id]
 	local stack = ItemStack(item_name)
+	-- double check that we only give legal stack sizes
 	take_count = math.min(take_count, stack:get_stack_max())
 	stack:set_count(take_count)
 
 	-- update everything
-	-- TODO: optimize, we are taking out, only need to update infotext mostly
 	self.count[id] = self.count[id] - take_count
 	self:update_visibles_in(tag_id)
 	self:write_meta()
 
 	-- return the stack that was removed from the drawer
 	return stack
-end -- take_items_in
+end -- take_from
 
---- proxy to Handler:take_items_in(tag_id, take_count)
+--- proxy to Handler:take_from(tag_id, take_count)
 -- returns the stack that was removed from the drawer
-function Handler:take_stack_in(tag_id)
+function Handler:take_stack_from(tag_id)
 	local id = tonumber(tag_id)
-	return self:take_items_in(id, self.item_stack_max[id])
-end -- take_stack_in
+	return self:take_from(id, self.item_stack_max[id])
+end -- take_stack_from
 
 --- get texture string for tag with id tag_id.
 -- returns a string
@@ -515,6 +542,7 @@ end
 -- infotext and texture
 -- called whenever transaction happens and also at init of Handler object
 -- it does not write to meta, only to handler object tables.
+-- TODO: optimize, we are taking out, only need to update infotext mostly
 function Handler:update_visibles_in(tag_id)
 	local id = tonumber(tag_id)
 	local item_description = ''

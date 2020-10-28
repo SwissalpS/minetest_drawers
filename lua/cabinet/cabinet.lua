@@ -51,26 +51,15 @@ function drawers.cabinet.allow_upgrade_take(pos_cabinet, list_name, index, stack
 	return stack:get_count()
 end -- drawers.cabinet.allow_upgrade_take
 
--- Returns how much (count) of a stack can be inserted to a cabinet drawer.
--- TODO is this still used
-function drawers.cabinet.can_insert_stack(pos_cabinet, stack, tag_id)
-	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
-	if not handler then
-		-- this is unlikely to happen if called through node methods
-		return
-	end
-	return handler:can_insert_in(tag_id, stack)
-end -- drawers.cabinet.can_insert_stack
-
 -- Returns whether a stack can be (partially) inserted to any drawer of a cabinet.
-function drawers.cabinet.can_insert_stack_from_tube(pos_cabinet, node, stack, direction)
+function drawers.cabinet.can_insert(pos_cabinet, node, stack, direction)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen if called through node methods
 		return false
 	end
 	return 0 < handler:can_insert(stack)
-end -- drawers.cabinet.can_insert_stack_from_tube
+end -- drawers.cabinet.can_insert
 
 -- is called when upgrades are changed
 function drawers.cabinet.drop_overload(pos_cabinet)
@@ -128,26 +117,15 @@ function drawers.cabinet.drop_stack(pos_cabinet, stack)
 	minetest.item_drop(stack, nil, pos_drop)
 end -- drawers.cabinet.drop_stack
 
---- Inserts an incoming stack into a specific drawer of a cabinet.
--- TODO is this still used?
-function drawers.cabinet.insert_object(pos_cabinet, stack, tag_id)
-	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
-	if not handler then
-		-- this is unlikely to happen
-		return
-	end
-	return handler:fill_drawer(tag_id, stack, true)
-end -- drawers.cabinet.insert_object
-
 -- Inserts an incoming stack into a cabinet and uses all drawers
-function drawers.cabinet.insert_object_from_tube(pos_cabinet, node, stack, direction)
+function drawers.cabinet.fill_cabinet(pos_cabinet, node, stack, direction)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen
 		return stack
 	end
 	return handler:fill_cabinet(stack)
-end -- drawers.cabinet.insert_object_from_tube
+end -- drawers.cabinet.fill_cabinet
 
 function drawers.cabinet.on_construct(pos_cabinet)
 	-- meta
@@ -240,24 +218,14 @@ function drawers.cabinet.randomize_pos(pos)
 	return pos_rand
 end -- drawers.cabinet.randomize_pos
 
-function drawers.cabinet.take_item(pos_cabinet, stack)
+function drawers.cabinet.take(pos_cabinet, stack)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
 		-- this is unlikely to happen if called through node methods
 		return ItemStack()
 	end
-	-- limit count to stack_max
-	local count = math.min(stack:get_count(), stack:get_stack_max())
-	local name = stack:get_name()
-	local id = handler.drawer_count
-	repeat
-		if handler:name_in(id) == name then
-			return handler:take_items_in(id, count)
-		end
-		id = id - 1
-	until 0 == id
-	return ItemStack()
-end -- drawers.cabinet.take_item
+	return handler.take(stack)
+end -- drawers.cabinet.take
 
 function drawers.cabinet.upgrade_update(pos_cabinet, list_name)
 	-- only do anything if adding to upgrades

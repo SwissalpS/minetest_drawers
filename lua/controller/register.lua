@@ -92,7 +92,7 @@ if drawers.has_pipeworks then
 	}
 	-- actually insert objec from tubes
 	def.tube.insert_object = function(pos_controller, node, stack, tubedir)
-		return drawers.controller.insert_to_drawers(pos_controller, stack)
+		return drawers.controller.fill_net(pos_controller, stack)
 	end
 
 	if drawers.has_digilines then

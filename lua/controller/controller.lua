@@ -26,43 +26,7 @@ local function contains_pos(list, pos)
 		index = index - 1
 	until 0 == index
 	return false
-end
-
---- checks if all fields are set in net_index table
--- helper for drawers.controller.get_drawer_index()
--- old but may need to be used in case meta got corrupted for some reason
-local function is_valid_index(net_index, item_name)
-	return net_index and
-			net_index[item_name] and
-			net_index[item_name].pos_cabinet and
-			net_index[item_name].pos_cabinet.x and
-			net_index[item_name].pos_cabinet.y and
-			net_index[item_name].pos_cabinet.z and
-			net_index[item_name].tag_id
-end -- is_valid_index
-
---- helper to wrap in table
--- old
-local function index_drawer(pos_cabinet, tag_id)
-	return { pos_cabinet = pos_cabinet, tag_id = tag_id }
-end -- index_drawer
-
---- TODO I don't see this used anywhere
---- iterator for iterating from 1/-1 to last
-local function range(last)
-	local i = 0
-	return function()
-		if i == last then
-			return nil
-		end
-		if 0 < last then
-			i = i + 1
-		else
-			i = i - 1
-		end
-		return i, i
-	end
-end -- range
+end -- contains_pos
 
 local function pos_in_range(pos1, pos2)
 	local diff = {
@@ -81,45 +45,6 @@ local function pos_in_range(pos1, pos2)
 	until 0 == index
 	return true
 end -- pos_in_range
-
--- old way
-function drawers.controller.add_cabinet_to_inventory(cabinet_inventory, pos_cabinet)
-	local handler = drawers.cabinet.handler_for(pos_cabinet)
-	if not handler then
-		-- this is either a trim or controller node
-		return
-	end
-	local item_name, override, handler2, index_cabinet2, space2
-	local id = handler.drawer_count
-	repeat
-		item_name = handler:name_in(id)
-		if '' == item_name and not cabinet_inventory[EMPTY] then
-			cabinet_inventory[EMPTY] = index_drawer(pos_cabinet, id)
-		elseif '' ~= item_name then
-			-- If we already indexed this item previously, check which drawer
-			-- has the most space and have that one be the one indexed
-			override = true
-			if cabinet_inventory[item_name] then
-				index_cabinet2 = cabinet_inventory[item_name]
-				handler2 = drawers.cabinet.handler_for(index_cabinet2.pos_cabinet)
-				if not handler2 then
-					-- seems this cabinet no longer exists
-					-- TODO may need some cleanup of stray entities here
-					override = true
-				else
-					space2 = handler2:free_space_in(index_cabinet2.tag_id)
-					override = space2 < handler:free_space_in(id)
-				end
-			end
-			-- If the already indexed drawer has less space, we override the
-			-- table index for that item with the new drawer
-			if override then
-				cabinet_inventory[item_name] = index_drawer(pos_cabinet, id)
-			end
-		end
-		id = id - 1
-	until 0 == id
-end -- drawers.controller.add_cabinet_to_inventory
 
 --- called when a cabinet, trim, controller or compactor is placed
 -- search for controllers in area and have them re-index
@@ -271,107 +196,11 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 	return found_positions
 end -- drawers.controller.find_connected
 
--- old
-function drawers.controller.index_cabinets(pos_controller)
-	--[[
-	We store the item name as a string key and the value is a table with position x,
-	position y, position z, and tag_id. Those are all strings as well with the
-	values assigned to them that way we don't need to worry about the ordering of
-	the table. The count and max count are not stored as those values have a high
-	potential of being outdated quickly. It's better to grab the values from the
-	cabinet handler when needed so you know you are working with accurate numbers.
-	]]
-
-	local cabinet_inventory = {}
-	local connected_cabinets = drawers.controller.find_connected(pos_controller)
-	local index = #connected_cabinets
-	if 0 == index then
-		return cabinet_inventory
-	end
-	local pos_cabinet
-	repeat
-		pos_cabinet = connected_cabinets[index]
-		drawers.controller.add_cabinet_to_inventory(cabinet_inventory, pos_cabinet)
-		index = index - 1
-	until 0 == index
-
-	return cabinet_inventory
-end -- index_cabinets
-
---- get an index of a cabinet that has a drawer for item.
--- Returns a table of all stored item names in the drawer network with their
--- cabinet position and tag_id.
---
--- It uses the cached data, if possible, but if the item_name is not contained
--- the network is reindexed.
--- old
-function drawers.controller.get_drawer_index(pos_controller, item_name)
-	-- If the index has not been created, the item isn't in the index, the
-	-- item in the drawer is no longer the same item in the index, or the item
-	-- is in the index but it's full, run the index_cabinets function.
-	local meta = minetest.get_meta(pos_controller)
-	local net_index = minetest.deserialize(meta:get_string('net_index'))
-	local scan_needed = false
-	if is_valid_index(net_index, item_name) then
-		-- There is a valid entry in the index: check that the entry is still up-to-date
-		local entry = net_index[item_name]
-		local handler = drawers.cabinet.handler_for(entry.pos_cabinet, true)
-		if handler then
-			if handler:name_in(entry.tag_id) ~= item_name
-				or 0 >= handler:free_space_in(entry.tag_id)
-			then
-				-- if there is none with less content, this one will be added again
-				scan_needed = true
-			end
-		else
-			scan_needed = true
-		end -- if got handler or not
-	else
-		-- If the index has not been created
-		-- If the item isn't in the index (or the index is corrupted)
-		-- search for cabinets and index them again
-		scan_needed = true
-	end -- if have valid entry or not
-	if scan_needed then
-		net_index = drawers.controller.index_cabinets(pos_controller)
-		meta:set_string('net_index', minetest.serialize(net_index))
-	end
-	return net_index
-end -- drawers.controller.get_drawer_index
-
--- old
-function drawers.controller.insert_to_empty_drawer(pos_controller, stack)
-	local item_name = stack:get_name()
-	local net_index = drawers.controller.get_drawer_index(pos_controller, item_name)
-	if not net_index[EMPTY] then
-		return stack
-	end
-	local pos_cabinet = net_index[EMPTY].pos_cabinet
-	local tag_id = net_index[EMPTY].tag_id
-	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
-	if not handler then
-		return stack
-	end
-	-- If the drawer is still empty we put the items in the drawer
-	-- TODO add support for locked drawers that may be just as empty.
-	--	possibly this is not required though, as the locked ones would be found
-	--	and filled first
-	if '' == handler:name_in(tag_id) then
-		local leftover = handler:fill_cabinet(tag_id, stack, true)
-
-		-- Add the item to the drawers table index and set the empty one to nil
-		net_index[EMPTY] = nil
-		net_index[item_name] = index_drawer(pos_cabinet, tag_id)
-
-		-- Set the controller metadata
-		minetest.get_meta(pos_controller):set_string('net_index',
-												minetest.serialize(net_index))
-
-		return leftover
-	end -- if empty
-end -- drawers.controller.insert_to_empty_drawer
-
-function drawers.controller.insert_to_drawers(pos_controller, stack)
+--- fill in as much of stack as fits according to use_all settings
+-- returns leftover ItemStack
+-- this method assumes that space had been checked beforehand which means
+-- net_index is up to date.
+function drawers.controller.fill_net(pos_controller, stack)
 
 	local use_all = 0 < minetest.get_meta(pos_controller):get_int('use_all')
 	local item_name = stack:get_name()
@@ -447,7 +276,7 @@ function drawers.controller.insert_to_drawers(pos_controller, stack)
 		end -- if got any alternatives
 	end -- if got empty primary
 	return leftover
-end -- drawers.controller.insert_to_drawers
+end -- drawers.controller.fill_net
 
 function drawers.controller.can_dig(pos_controller, player)
 	local meta = minetest.get_meta(pos_controller);
@@ -458,6 +287,8 @@ end
 function drawers.controller.on_construct(pos_controller)
 	local meta = minetest.get_meta(pos_controller)
 	meta:set_string('net_index', '')
+	meta:set_string('cabinets', '')
+	meta:set_string('compactors', '')
 	meta:set_int('use_all', 0)
 	meta:set_string('formspec', drawers.controller.gui.formspec(pos_controller))
 	meta:get_inventory():set_size('src', 1)
@@ -490,11 +321,11 @@ print('controller_allow_metadata_inventory_put')
 	if minetest.is_protected(pos_controller, player:get_player_name()) then
 		return 0
 	end
-	local space = drawers.controller.has_space_for(pos_controller, stack)
+	local space = drawers.controller.can_insert(pos_controller, stack)
 	return space
 end -- drawers.controller.allow_metadata_inventory_put
 
-function drawers.controller.has_space_for(pos_controller, stack, have_scanned)
+function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 	local use_all = 0 < minetest.get_meta(pos_controller):get_int('use_all')
 	local item_name = stack:get_name()
 print(item_name, stack:get_count(), stack:get_stack_max())
@@ -647,13 +478,13 @@ print(item_name, stack:get_count(), stack:get_stack_max())
 			return space_found
 		end
 		drawers.controller.scan_cabinets(pos_controller)
-		return drawers.controller.has_space_for(pos_controller, stack, true)
+		return drawers.controller.can_insert(pos_controller, stack, true)
 	end
 	return space_found
-end -- drawers.controller.has_space_for
+end -- drawers.controller.can_insert
 
 --- called when user moves items around inventories
--- TODO: check when and what really happens
+-- TODO: check when and what really happens, don't think this is used any more
 -- return amount of items that can be put
 function drawers.controller.allow_metadata_inventory_move(pos_controller,
 						from_list, from_index, to_list, to_index, count, player)
@@ -666,6 +497,8 @@ function drawers.controller.allow_metadata_inventory_move(pos_controller,
 end -- drawers.controller.allow_metadata_inventory_move
 
 --- called when player takes stack out of formspec inventory
+-- which is unlikely to ever happen since we check for space before player can
+-- put anything in inventory slot or tubes
 -- return amount of items allowed to be removed
 function drawers.controller.allow_metadata_inventory_take(pos_controller,
 												list_name, index, stack, player)
@@ -689,7 +522,7 @@ print('controller_on_metadata_inventory_put')
 	local inventory = minetest.get_meta(pos_controller):get_inventory()
 
 	local complete_stack = inventory:get_stack(list_name, 1)
-	local leftover = drawers.controller.insert_to_drawers(pos_controller,
+	local leftover = drawers.controller.fill_net(pos_controller,
 															complete_stack)
 
 	inventory:set_stack(list_name, 1, leftover)
