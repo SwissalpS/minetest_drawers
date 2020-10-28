@@ -93,6 +93,7 @@ inserting them using tubes (e.g. self contained injector, digiline injector)
 
 Controller Output (digiline)
 ----------------------------
+* [ ] channel field is only visible when digilines mod is also installed
 * [ ] changing channel works using formspec
 * [ ] reading channel works with channel copier [digistuff]
 * [ ] setting channel works with channel copier [digistuff]
@@ -126,4 +127,14 @@ Compactor Basic
 * [ ] dig works when empty
 * [ ] dig works when full -> items (and upgrades) drop into world
 --]]
+
+Jumpdrive
+----------
+* [ ] no entities left behind
+* [ ] all entities appear at new location
+* [ ] all contents and settings are correct
+
+Migration
+----------
+* [ ] old drawer setups migrate correctly to new version
 
