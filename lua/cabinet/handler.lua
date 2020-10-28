@@ -36,27 +36,6 @@ print('Handler:new:no cabinet_node')
 	self:read_meta()
 end -- new
 
---- table of 3 most important values of a drawer
--- returns table with count, name and max_count fields
-function Handler:contents_in(tag_id)
-	return {
-		count = tonumber(self:count_in(tag_id)),
-		name = self:name_in(tag_id),
-		max_count = tonumber(self:max_count_in(tag_id)),
-	}
-end -- contents_in
-
---- amount of items in drawer
--- returns a string
-function Handler:count_in(tag_id)
-	return self.count[tonumber(tag_id)] or ''
-end --
-
---- amount of space in drawer
-function Handler:free_space_in(tag_id)
-	return tonumber(self:max_count_in(tag_id)) - tonumber(self:count_in(tag_id))
-end --
-
 --- Inquire how much of stack fits in cabinet
 function Handler:can_insert(stack)
 	local total = 0
@@ -106,6 +85,94 @@ function Handler:can_insert_in(tag_id, stack)
 	return self.max_count[id] - self.count[id]
 end -- can_insert_in
 
+--- table of 3 most important values of a drawer
+-- returns table with count, name and max_count fields
+function Handler:contents_in(tag_id)
+	return {
+		count = tonumber(self:count_in(tag_id)),
+		name = self:name_in(tag_id),
+		max_count = tonumber(self:max_count_in(tag_id)),
+	}
+end -- contents_in
+
+--- amount of items in drawer
+-- returns a string
+function Handler:count_in(tag_id)
+	return self.count[tonumber(tag_id)] or ''
+end --
+
+--- insert as much as fits, even in neighboring drawers of the same cabinet.
+-- return what did not fit
+-- please use this route to insert items into drawers
+function Handler:fill_cabinet(stack)
+	-- first try to insert in the correct drawer (if there are already items)
+	local leftover = stack
+	local item_name = stack:get_name()
+	local id = self.drawer_count
+	repeat
+		if item_name == self.name[id] then
+			leftover = self:fill_drawer(id, leftover, true)
+		end -- if names match
+		id = id - 1
+	until 0 == id or 0 >= leftover:get_count()
+
+	-- if there's still something left, also use other drawers
+	if 0 < leftover:get_count() then
+		id = self.drawer_count
+		repeat
+			leftover = self:fill_drawer(id, leftover, true)
+			id = id - 1
+		until 0 == id or 0 >= leftover:get_count()
+	end
+	return leftover
+end -- fill_cabinet
+
+--- insert as much as fits into this drawer
+-- return what did not fit
+function Handler:fill_drawer(tag_id, stack, insert_all)
+	-- make sure count is correct
+	local itemstack = ItemStack(stack)
+	if not insert_all then
+		itemstack:set_count(1)
+	end
+
+	local insert_count = self:can_insert_in(tag_id, itemstack)
+	-- no space, no action
+	if 0 == insert_count then
+		return stack
+	end
+
+	local id = tonumber(tag_id)
+
+	-- in case the drawer was empty, initialize count, itemName, maxCount
+	if '' == self:name_in(tag_id) then
+		self.count[id] = 0
+		local name = stack:get_name()
+		local stack_max = minetest.registered_items[name].stack_max
+		self.name[id] = name
+		self.max_count[id] = stack_max * self.slots_per_drawer
+		self.item_stack_max[id] = stack_max
+	end
+
+	-- update everything
+	self.count[id] = self.count[id] + insert_count
+	self:update_visibles_in(tag_id)
+	self:write_meta()
+
+	-- return leftover
+	stack:take_item(insert_count)
+	-- TODO: figure out why we can't give back a stack with zero count
+	if 0 >= stack:get_count() then
+		return ItemStack('')
+	end
+	return stack
+end -- fill_drawer
+
+--- amount of space in drawer
+function Handler:free_space_in(tag_id)
+	return tonumber(self:max_count_in(tag_id)) - tonumber(self:count_in(tag_id))
+end --
+
 function Handler:infotext_in(tag_id)
 	return self.infotext[tonumber(tag_id)] or ''
 end
@@ -132,14 +199,6 @@ print('Handler:is_cabinet_missing')
 	return false
 end -- is_cabinet_missing
 
-function Handler:name_in(tag_id)
-	return self.name[tonumber(tag_id)] or ''
-end
-
-function Handler:stack_max_in(tag_id)
-	return self.item_stack_max[tonumber(tag_id)] or 0
-end
-
 -- seems like not used (yet)
 function Handler:locked_in(tag_id)
 	return self.locked[tonumber(tag_id)] or 0
@@ -147,6 +206,10 @@ end
 
 function Handler:max_count_in(tag_id)
 	return self.max_count[tonumber(tag_id)] or 0
+end
+
+function Handler:name_in(tag_id)
+	return self.name[tonumber(tag_id)] or ''
 end
 
 --- Handle player right-clicking tag entity to put items in drawer.
@@ -402,6 +465,10 @@ function Handler:set_slots_per_drawer(slots_per_drawer)
 	self:write_meta()
 end -- set_slots_per_drawer
 
+function Handler:stack_max_in(tag_id)
+	return self.item_stack_max[tonumber(tag_id)] or 0
+end
+
 --- take requested amount out of drawer with id tag_id or as much as is in there
 -- returns stack of taken items
 -- updates visuals
@@ -443,73 +510,6 @@ end -- take_stack_in
 function Handler:texture_in(tag_id)
 	return self.texture[tonumber(tag_id)] or 'blank.png'
 end
-
---- insert as much as fits, even in neighboring drawers of the same cabinet.
--- return what did not fit
--- please use this route to insert items into drawers
-function Handler:fill_cabinet(stack)
-	-- first try to insert in the correct drawer (if there are already items)
-	local leftover = stack
-	local item_name = stack:get_name()
-	local id = self.drawer_count
-	repeat
-		if item_name == self.name[id] then
-			leftover = self:fill_drawer(id, leftover, true)
-		end -- if names match
-		id = id - 1
-	until 0 == id or 0 >= leftover:get_count()
-
-	-- if there's still something left, also use other drawers
-	if 0 < leftover:get_count() then
-		id = self.drawer_count
-		repeat
-			leftover = self:fill_drawer(id, leftover, true)
-			id = id - 1
-		until 0 == id or 0 >= leftover:get_count()
-	end
-	return leftover
-end -- fill_cabinet
-
---- insert as much as fits into this drawer
--- return what did not fit
-function Handler:fill_drawer(tag_id, stack, insert_all)
-	-- make sure count is correct
-	local itemstack = ItemStack(stack)
-	if not insert_all then
-		itemstack:set_count(1)
-	end
-
-	local insert_count = self:can_insert_in(tag_id, itemstack)
-	-- no space, no action
-	if 0 == insert_count then
-		return stack
-	end
-
-	local id = tonumber(tag_id)
-
-	-- in case the drawer was empty, initialize count, itemName, maxCount
-	if '' == self:name_in(tag_id) then
-		self.count[id] = 0
-		local name = stack:get_name()
-		local stack_max = minetest.registered_items[name].stack_max
-		self.name[id] = name
-		self.max_count[id] = stack_max * self.slots_per_drawer
-		self.item_stack_max[id] = stack_max
-	end
-
-	-- update everything
-	self.count[id] = self.count[id] + insert_count
-	self:update_visibles_in(tag_id)
-	self:write_meta()
-
-	-- return leftover
-	stack:take_item(insert_count)
-	-- TODO: figure out why we can't give back a stack with zero count
-	if 0 >= stack:get_count() then
-		return ItemStack('')
-	end
-	return stack
-end -- fill_drawer
 
 --- update user visible indicators
 -- infotext and texture
