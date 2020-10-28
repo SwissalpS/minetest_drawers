@@ -224,7 +224,7 @@ function drawers.cabinet.take(pos_cabinet, stack)
 		-- this is unlikely to happen if called through node methods
 		return ItemStack()
 	end
-	return handler.take(stack)
+	return handler:take(stack)
 end -- drawers.cabinet.take
 
 function drawers.cabinet.upgrade_update(pos_cabinet, list_name)
