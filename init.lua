@@ -2,6 +2,7 @@ local load_start = os.clock()
 
 -- home sweet home
 drawers = {}
+drawers.version = 20201031
 drawers.modpath = minetest.get_modpath(minetest.get_current_modname())
 -- place to cache some data during runtime
 drawers.tmp = {}
