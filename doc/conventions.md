@@ -4,19 +4,24 @@ This document covers *.lua files, it does not apply to documentation files.
 
 Terms
 -------
-cabinet: the node that has 1, 2 or 4 drawers in it and up to five upgrades.
-drawers: the name of this mod but also refers to multiple compartments in a
+**cabinet**: the node that has 1, 2 or 4 drawers in it and up to five upgrades.
+
+**drawers**: the name of this mod but also refers to multiple compartments in a
     cabinet.
-drawer: one compartment that holds items. Each drawer has a number of slots
+    
+**drawer**: one compartment that holds items. Each drawer has a number of slots
     available. The amount of slots depends on upgrades and if MC-clone mod is used.
     The total amount of items a drawer can hold, depends on the item's max stack
     size (cobble = 99, minegeld = 65535), and the amount of slots.
-tag: this is the entity that displays texture and infotext of a drawer.
+    
+**tag**: this is the entity that displays texture and infotext of a drawer.
     It is also used for manual player interactions.
-controller: this node manipulates a network of cabinets. There can be multiple
+    
+**controller**: this node manipulates a network of cabinets. There can be multiple
     controllers in the same cabinet network. They offer a digiline interface
     and also take items from tubes and formspec inventory.
-compactor: this node makes blocks from ingots and in case of coal, clay and sulfur
+    
+**compactor**: this node makes blocks from ingots and in case of coal, clay and sulfur
     from lumps too. May also add honey, cobbles and dirt.
 
 Whitespace
