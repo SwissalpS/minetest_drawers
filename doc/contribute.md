@@ -1,9 +1,9 @@
 Contributing to this branch of 2020 reboot
 =============================================
-[home of this effort on github is the TODO branch](https://SwissalpS.github.com/drawers/branch/)
-[conventions we are striving toward](conventions.md)
-[scratchpad of changes for migration](rewriteChanges.md)
-[checklist for testers](checklist.md)
+[[home of this effort on github is the TODO branch](https://SwissalpS.github.com/drawers/branch/)]
+[[conventions we are striving toward](conventions.md)]
+[[scratchpad of changes for migration](rewriteChanges.md)]
+[[checklist for testers](checklist.md)]
 
 Currently reviewers and advisors are most wanted help to this effort.
 
@@ -40,14 +40,13 @@ Drawer Cabinet Pipeworks
 
 Drawer Controller
 ------------------
-* [ ] tested that does not include cabinets belonging to other players to network
+* [ ] tested that does not include cabinets belonging to other players to network (maybe this is a feature)
 * [ ] tested that can't access cabinets that are no longer connected
 * [ ] tested that index is destroyed or updated when controller has been jumped with jumpdrive
 
 Drawer Controller Digiline
 -----------------------------
-* [~] allow taking also when drawer is 100% full (need to rewrite controller
-    code for one, but had it working on an upstream version)
+* [~] allow taking also when drawer is 100% full
 * [ ] add command { command = 'has', name = 'mode:item' } that returns a
     boolean TODO figure out how exactly. bc next expansion requests will come
 * [ ] give correct item no matter which orientation the cabinet and controller
@@ -72,3 +71,15 @@ Drawer Compactor
     should compact and how much to leave uncompacted or do we need to offer
     players options.
 
+Translation
+-------------
+* [ ] move from intlib to
+```lua
+-- Minetest Translator
+local S = minetest.get_translator("drawers")
+```
+
+Compatibility
+----------------
+* [ ] jumpdrive
+* [ ] mesecons metrics
