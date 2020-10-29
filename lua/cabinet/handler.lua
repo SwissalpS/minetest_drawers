@@ -389,7 +389,7 @@ print('Handler:read_meta:KO:not valid handler object')
 	self.infotext = {}
 	self.texture = {}
 	local needs_init = 0 == self.slots_per_drawer
-	local index = self.drawer_count
+	local id = self.drawer_count
 	local tag_id, name, stack_max, max_count
 	if needs_init then
 		-- must be initialized, probably drawer has only just been placed
@@ -399,22 +399,22 @@ print('Handler:read_meta:new drawer was just placed')
 		stack_max = minetest.nodedef_default.stack_max or 99
 		max_count = stack_max * self.slots_per_drawer
 		repeat
-			self.count[index] = 0
-			self.item_stack_max[index] = stack_max
-			self.locked[index] = 0
-			self.max_count[index] = max_count
-			self.name[index] = ''
-			self:update_visibles_in(index)
-			index = index - 1
-		until 0 == index
+			self.count[id] = 0
+			self.item_stack_max[id] = stack_max
+			self.locked[id] = 0
+			self.max_count[id] = max_count
+			self.name[id] = ''
+			self:update_visibles_in(id)
+			id = id - 1
+		until 0 == id
 		-- probably good idea to save meta at this point
 		self:write_meta()
 	else
 		-- just read
 		repeat
-			tag_id = tostring(index)
+			tag_id = tostring(id)
 			name = self.meta:get_string(key_item_name .. tag_id)
-			self.count[index] = self.meta:get_int(key_count .. tag_id)
+			self.count[id] = self.meta:get_int(key_count .. tag_id)
 			if minetest.registered_items[name] then
 				stack_max = minetest.registered_items[name].stack_max
 			else
@@ -424,22 +424,22 @@ print('Handler:read_meta:new drawer was just placed')
 					.. name .. '" in a drawer at: '
 					.. minetest.pos_to_string(self.pos_cabinet)
 					.. ' drawer with tag id ' .. tag_id .. ' has '
-					.. tostring(self.count[index]) .. ' items. '
+					.. tostring(self.count[id]) .. ' items. '
 					.. 'Setting max stack to 65535. Players can remove but '
 					.. 'not put more in.'
 				minetest.log('warning', warning)
 				print(warning)
 			end
-			self.infotext[index] = ''
-			self.item_stack_max[index] = stack_max
-			self.name[index] = name
-			self.locked[index] = self.meta:get_int(key_locked .. tag_id)
-			self.max_count[index] = stack_max * self.slots_per_drawer
+			self.infotext[id] = ''
+			self.item_stack_max[id] = stack_max
+			self.name[id] = name
+			self.locked[id] = self.meta:get_int(key_locked .. tag_id)
+			self.max_count[id] = stack_max * self.slots_per_drawer
 
-			self:update_visibles_in(index)
+			self:update_visibles_in(id)
 
-			index = index - 1
-		until 0 == index -- loop all drawers of this cabinet into object fields
+			id = id - 1
+		until 0 == id -- loop all drawers of this cabinet into object fields
 	end -- if needs init or just read
 	return true
 end -- read_meta
