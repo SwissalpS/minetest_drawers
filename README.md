@@ -2,10 +2,15 @@
 
 
 **************  THIS BRANCH IS STILL IN RE-WRITE MODE **************
+
 it is not yet production ready, you may mess up your world if you use this
 mod in a world that already has drawers in it.
+
 *********************** YOU HAVE BEEN WARNED ***********************
-[If you are aware of this and want to contribute](doc/contribute.md)
+
+[[If you are aware of this and want to contribute](doc/contribute.md)]
+
+
 
 
 the links bellow this line point to upstream, use the link above for now.
