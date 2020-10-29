@@ -26,6 +26,8 @@ dofile(drawers.modpath .. '/lua/compactor/init.lua')
 -- stores cache of network
 -- handles tubes and digiline
 dofile(drawers.modpath .. '/lua/controller/init.lua')
+-- register lbm migration
+dofile(drawers.modpath .. '/lua/lbm.lua')
 --------------------------------------------------------------------------------
 print(('[drawers] loaded in %f seconds'):format(os.clock() - load_start))
 

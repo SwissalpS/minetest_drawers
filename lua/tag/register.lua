@@ -36,47 +36,5 @@ local entity_def = {
 
 } -- entity_def
 
-local function lbm_action(pos, node)
-	local meta = minetest.get_meta(pos)
-	-- create drawer upgrade inventory
-	meta:get_inventory():set_size('upgrades', 5)
-
-	-- set the formspec
-	meta:set_string('formspec', drawers.cabinet.formspec)
-
-	-- count the drawer tags
-	local drawer_count = minetest.registered_nodes[node.name].groups.drawers
-	local found_tags = 0
-	local objects = minetest.get_objects_inside_radius(pos, 0.56)
-	local luaentity
-	if objects then
-		for _, object in ipairs(objects) do
-			luaentity = object:get_luaentity()
-			-- TODO: test if we need to check for nil objects and luaentities
-			if 'drawers:visual' == luaentity.name then
-				found_tags = found_tags + 1
-			end -- if
-		end -- loop all found objects
-	end -- if any objects found at all
-
-	-- if all drawer tags were found, return
-	if found_tags == drawer_count then
-		return
-	end
-
-	-- not enough tags found, remove existing and create new ones
-	drawers.tag.map.remove_for(pos)
-	drawers.tag.map.spawn_for(pos)
-
-end -- lbm_action
-
-local lbm_def = {
-	name = 'drawers:restore_visual',
-	nodenames = { 'group:drawers' },
-	run_at_every_load = true,
-	action  = lbm_action
-}
-
 minetest.register_entity('drawers:visual', entity_def)
-minetest.register_lbm(lbm_def)
 
