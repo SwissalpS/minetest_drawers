@@ -606,15 +606,15 @@ print('Handler:write_meta')
 print('KO:Handler:write_meta:not a valid handler object')
 		return nil
 	end
-	local index = self.drawer_count
+	local id = self.drawer_count
 	local tag_id
 	repeat
-		tag_id = tostring(index)
-		self.meta:set_int(key_count .. tag_id, self.count[index])
-		self.meta:set_string(key_item_name .. tag_id, self.name[index])
-		self.meta:set_int(key_locked .. tag_id, self.locked[index])
-		index = index - 1
-	until 0 == index
+		tag_id = tostring(id)
+		self.meta:set_int(key_count .. tag_id, self.count[id])
+		self.meta:set_string(key_item_name .. tag_id, self.name[id])
+		self.meta:set_int(key_locked .. tag_id, self.locked[id])
+		id = id - 1
+	until 0 == id
 	self.meta:set_int(key_slots_per_drawer, self.slots_per_drawer)
 
 	return true
