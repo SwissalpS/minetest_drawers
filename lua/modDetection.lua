@@ -2,8 +2,6 @@
 -- drawers/lua/modDetection.lua
 -- detect which other mods are being used
 --
-
--- check for other mods
 drawers.has_default = minetest.get_modpath('default')
 						and minetest.global_exists('default')
 

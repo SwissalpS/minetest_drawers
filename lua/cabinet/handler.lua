@@ -1,17 +1,21 @@
 --
 -- drawers/lua/cabinet/handler.lua
 --
+-- Handler object is initialized when area first loads after server start.
+-- They stay in memory until server is shut down.
+-- They handle metadata for cabinets and methods to inquire and manipulate
+-- contents of drawers in the cabinet.
+
+-- load and extend the base object
 local Base_Object = dofile(drawers.modpath .. '/lua/baseObject.lua')
 local Handler = Base_Object:extend()
 
 -- TODO: discuss if it is worth using really short field names
--- in code we could use discriptive varables like so, but globaly defined so
--- other code that accesses cabinet node's metadata can use the same ones
--- would have to be cleaned up in migrate_cabinet_meta()
-local key_count = 'count'
-local key_item_name = 'name'
-local key_locked = 'locked'
-local key_slots_per_drawer = 'slots_per_drawer'
+-- in code we could use discriptive varables like so:
+local key_count = 'count' -- c
+local key_item_name = 'name' -- n
+local key_locked = 'locked' -- l
+local key_slots_per_drawer = 'slots_per_drawer' -- s
 
 --- Handler object initializer
 -- use this way:
@@ -19,24 +23,24 @@ local key_slots_per_drawer = 'slots_per_drawer'
 -- called by handler_for() when area is first loaded or some other mod cleared
 -- out some cached objects.
 function Handler:new(pos_cabinet)
-print('Handler:new')
 	self.is_valid = false
+	-- TODO do we need to use table.copy here?
 	self.pos_cabinet = table.copy(pos_cabinet)
 	-- so all we check is that this instance was instantiated via handler_for
 	-- without skipping node check
 	if self:is_cabinet_missing() then
-print('Handler:new:no cabinet_node')
 		return nil
 	end
 	-- get meta
 	self.meta = minetest.get_meta(pos_cabinet)
+	-- TODO do we need to use table.copy here?
 	self.pos_cabinet = table.copy(pos_cabinet)
 	self.is_valid = true
 	-- read meta and initialize cached values to defaults if need be
 	self:read_meta()
 end -- new
 
---- Inquire how much of stack fits in cabinet
+--- Inquire how much of stack fits in all drawers of cabinet
 function Handler:can_insert(stack)
 	local total = 0
 	local stack_count = stack:get_count()
@@ -48,6 +52,7 @@ function Handler:can_insert(stack)
 		end
 		id = id - 1
 	until 0 == id
+
 	return total
 end -- can_insert
 
@@ -81,6 +86,7 @@ function Handler:can_insert_in(tag_id, stack)
 	if (self.count[id] + stack_count) <= self.max_count[id] then
 		return stack_count
 	end
+
 	-- return how many would still have space
 	return self.max_count[id] - self.count[id]
 end -- can_insert_in
@@ -96,7 +102,8 @@ function Handler:contents_in(tag_id)
 end -- contents_in
 
 --- amount of items in drawer
--- returns a string
+-- returns a number or an empty string
+-- TODO is this still a legacy thing with the string?
 function Handler:count_in(tag_id)
 	return self.count[tonumber(tag_id)] or ''
 end --
@@ -124,6 +131,7 @@ function Handler:fill_cabinet(stack)
 			id = id - 1
 		until 0 == id or 0 >= leftover:get_count()
 	end
+
 	return leftover
 end -- fill_cabinet
 
@@ -144,7 +152,7 @@ function Handler:fill_drawer(tag_id, stack, insert_all)
 
 	local id = tonumber(tag_id)
 
-	-- in case the drawer was empty, initialize count, itemName, maxCount
+	-- in case the drawer was empty, initialize count, item name, max count
 	if '' == self:name_in(tag_id) then
 		self.count[id] = 0
 		local name = stack:get_name()
@@ -161,10 +169,7 @@ function Handler:fill_drawer(tag_id, stack, insert_all)
 
 	-- return leftover
 	stack:take_item(insert_count)
-	-- TODO: figure out why we can't give back a stack with zero count
-	if 0 >= stack:get_count() then
-		return ItemStack('')
-	end
+
 	return stack
 end -- fill_drawer
 
@@ -173,14 +178,15 @@ function Handler:free_space_in(tag_id)
 	return tonumber(self:max_count_in(tag_id)) - tonumber(self:count_in(tag_id))
 end --
 
+-- infotext for drawer with id tag_id
 function Handler:infotext_in(tag_id)
 	return self.infotext[tonumber(tag_id)] or ''
 end
 
 --- Checks if the cabinet node actually exists
+-- sets self.cabinet_node and self.drawer_count
 -- returns boolean
 function Handler:is_cabinet_missing()
-print('Handler:is_cabinet_missing')
 	-- check if there is a node at all there
 	self.cabinet_node = minetest.get_node_or_nil(self.pos_cabinet)
 	if not self.cabinet_node then
@@ -192,10 +198,13 @@ print('Handler:is_cabinet_missing')
 	if not node_def or not node_def.groups or not node_def.groups.drawers then
 		return true
 	end -- if unknown item
+
 	self.drawer_count = node_def.groups.drawers
 	if not (0 < self.drawer_count) then
+		-- not a cabinet
 		return true
 	end
+
 	return false
 end -- is_cabinet_missing
 
@@ -208,6 +217,7 @@ function Handler:max_count_in(tag_id)
 	return self.max_count[tonumber(tag_id)] or 0
 end
 
+--- returns item name of drawer
 function Handler:name_in(tag_id)
 	return self.name[tonumber(tag_id)] or ''
 end
@@ -263,9 +273,8 @@ function Handler:player_put(tag_id, player)
 	else
 		-- try to insert wielded item/stack only
 		leftover = self:fill_drawer(tag_id, wielded_item, not keys.sneak)
+
 		-- check if something was added
-
-
 		if leftover:get_count() < wielded_count then
 			changed = true
 			-- keep track of the name we may need if being locked
@@ -274,6 +283,7 @@ function Handler:player_put(tag_id, player)
 		-- set the leftover as new wielded item for the player
 		player:set_wielded_item(leftover)
 	end
+
 	if keys.aux1 then
 		-- TODO: move this to a generalized method so later it can be done using
 		-- digiline or some other tool
@@ -288,9 +298,11 @@ function Handler:player_put(tag_id, player)
 			end
 		end -- if not locked
 	end -- if keys.aux1
+
 	if changed then
 		self:update_visibles_in(id)
 	end
+
 	return changed
 end -- player_put
 
@@ -364,6 +376,7 @@ function Handler:player_take(tag_id, player)
 		-- play the interact sound
 		return true
 	end
+
 	return changed
 end -- player_take
 
@@ -379,16 +392,19 @@ function Handler:migrate()
 		else
 			tag_id = tostring(id)
 		end
+
 		if 1 == id then
 			stack_max_factor = self.meta:get_int('stack_max_factor' .. tag_id)
 			if 0 == stack_max_factor then
 				-- not an old cabinet
 				return false
 			end
+
 			max_count = self.meta:get_int('max_count' .. tag_id)
 			base_stack_max = self.meta:get_int('base_stack_max' .. tag_id)
 			self.slots_per_drawer = max_count / base_stack_max
 		end
+
 		self.count[id] = self.meta:get_int('count' .. tag_id)
 		self.item_stack_max[id] = base_stack_max
 		self.locked[id] = 0
@@ -404,6 +420,7 @@ function Handler:migrate()
 		self:update_visibles_in(id)
 		id = id + 1
 	until id > self.drawer_count
+
 	return true
 end -- migrate
 
@@ -483,6 +500,7 @@ function Handler:read_meta()
 			id = id - 1
 		until 0 == id -- loop all drawers of this cabinet into object fields
 	end -- if needs init or just read
+
 	return true
 end -- read_meta
 
@@ -523,6 +541,7 @@ print('Handler:take', stack:to_string())
 		-- not a valid item
 		return return_stack
 	end
+
 	-- limit count to stack_max
 	local stack_max = minetest.registered_items[item_name].stack_max
 	local count = math.min(stack:get_count(), stack_max)
@@ -538,6 +557,7 @@ print('Handler:take', stack:to_string())
 		end
 		id = id - 1
 	until 0 == id or return_stack:get_count() >= requested_count
+
 	return_stack:set_name(item_name)
 	return return_stack
 end -- take
@@ -636,6 +656,7 @@ function Handler:update_visibles_in(tag_id)
 		-- this does happen when area is loading
 		return
 	end
+
 	tag:update(self.infotext[id], self.texture[id])
 end -- update_visibles_in
 
@@ -643,9 +664,7 @@ end -- update_visibles_in
 -- called whenever a change happens
 -- returns nil if not a valid handler object or true on success
 function Handler:write_meta()
-print('Handler:write_meta')
 	if not self.is_valid then
-print('KO:Handler:write_meta:not a valid handler object')
 		return nil
 	end
 	local id = self.drawer_count

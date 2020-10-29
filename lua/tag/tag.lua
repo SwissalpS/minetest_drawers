@@ -1,43 +1,6 @@
 --
 -- drawers/lua/tag/tag.lua
 --
---[[
--- this only migrates metadata in cabinet node for self
-function drawers.tag:migrate_cabinet_meta()
-	-- for now we have nothing to migrate
-	return
-	-- all cabinets have at least one drawer, so we can safely test this way.
---	if 0 < self.meta:get_int('item_stack_max1') then return end
---	self.meta:set_int('item_stack_max' .. self.tag_id, self.meta:get_int(''))
--- problem may arrise with existing 1x1s that don't have a number :/
-end -- migrate_cabinet_meta
-
--- migrates deserialized static data to newer version
-function drawers.tag.migrate_tag_data(data)
-	-- backwards compatibility to really old versions
-	if 'drawers_empty.png' == data.texture then data.texture = 'blank.png' end
-	-- already using new version
-	if nil ~= data.x then return data end
-
-	data.c = data.drawerType
-	data.i = data.visualId
-	data.t = data.texture
-	data.x = data.drawer_posx
-	data.y = data.drawer_posy
-	data.z = data.drawer_posz
-
-	-- clear out old keys (not important as serialized_static_data will make new table)
-	-- this is mainly to help us debug code for parts that may still not use new keys
-	data.drawerType = nil
-	data.visualId = nil
-	data.texture = nil
-	data.drawer_posx = nil
-	data.drawer_posy = nil
-	data.drawer_posz = nil
-
-	return data
-end -- drawers.tag.migrate
---]]
 
 -- this is called when entity is deactivated, it MUST return a string.
 -- this string will be passed to on_activate when entity is restored.
@@ -54,8 +17,8 @@ function drawers.tag:handle_punch_take(player)
 	if not handler then
 		return
 	end
-	local changed = handler:player_take(self.tag_id, player)
 
+	local changed = handler:player_take(self.tag_id, player)
 	if changed then
 		-- we keep this as part of object for sound direction and possibly later
 		-- adding sounds per kind of item -- in years when sounds are not so expensive
@@ -71,6 +34,7 @@ function drawers.tag:handle_use_put(player)
 	if not handler then
 		return
 	end
+
 	local changed = handler:player_put(self.tag_id, player)
 	if changed then
 		-- we keep this as part of object for sound direction and possibly later
@@ -91,15 +55,15 @@ function drawers.tag:on_activate(static_data_serialized, delta_seconds)
 	end
 
 	-- Restore data
---	local data = minetest.deserialize(static_data_serialized)
---	if data then
 	if '' == static_data_serialized then
 		self.tag_id = drawers.tmp.new_tag_id
 	elseif nil == tonumber(static_data_serialized) then
+		-- migration from old version
 		self.tag_id = ''
 		self.object:remove()
 		return
 	else
+		-- normal cabinet that has been initialized already
 		self.tag_id = static_data_serialized
 	end
 

@@ -1,14 +1,9 @@
 --
 -- drawers/lua/cabinet/cabinet.lua
 --
---
 -- cabinet functions that are not part of register or in Handler
---
 
--- probably will contain most of what was in api.lua
-local S, NS = dofile(drawers.modpath .. '/intllib.lua')
-
--- return number of items allowed to put
+-- return number of upgrade items allowed to put
 function drawers.cabinet.allow_upgrade_put(pos_cabinet, list_name, index, stack, player)
 	-- no need to continue if it's not upgrades list.
 	if 'upgrades' ~= list_name then
@@ -24,12 +19,14 @@ function drawers.cabinet.allow_upgrade_put(pos_cabinet, list_name, index, stack,
 	if 1 > minetest.get_item_group(stack:get_name(), 'drawers_increment') then
 		return 0
 	end
+
 	-- don't allow stacking in upgrade inventory
 	local upgrade_inventory = minetest.get_meta(pos_cabinet):get_inventory()
 	local slot_count = upgrade_inventory:get_list('upgrades')[index]:get_count()
 	if 0 < slot_count then
 		return 0
 	end
+
 	-- allow just one into the empty slot
 	return 1
 end -- drawers.cabinet.allow_upgrade_put
@@ -46,6 +43,7 @@ function drawers.cabinet.allow_upgrade_take(pos_cabinet, list_name, index, stack
 		minetest.record_protection_violation(pos_cabinet, player_name)
 		return 0
 	end
+
 	-- permit to take any amount of anything out as there is a trick to get
 	-- any amount of anything in there
 	return stack:get_count()
@@ -58,6 +56,7 @@ function drawers.cabinet.can_insert(pos_cabinet, node, stack, direction)
 		-- this is unlikely to happen if called through node methods
 		return false
 	end
+
 	return 0 < handler:can_insert(stack)
 end -- drawers.cabinet.can_insert
 
@@ -68,6 +67,7 @@ function drawers.cabinet.drop_overload(pos_cabinet)
 		-- this is unlikely to happen
 		return
 	end
+
 	local id = handler.drawer_count
 	local stack, item_name, count, max_count, item_stack_max, remove_count
 	repeat
@@ -89,11 +89,14 @@ function drawers.cabinet.drop_overload(pos_cabinet)
 			-- drop the stack
 			drawers.cabinet.drop_stack(pos_cabinet, stack)
 		end
-		-- TODO: this is not nice to modify from here
+
+		-- this is not nice to modify from here, but for now it's OK
+		-- at least it is not messing with meta directly
 		handler.count[id] = count
 		handler:update_visibles_in(id)
 		id = id - 1
 	until 0 == id
+
 	handler:write_meta()
 end -- drawers.cabinet.drop_overload
 
@@ -113,6 +116,7 @@ function drawers.cabinet.drop_stack(pos_cabinet, stack)
 		pos_drop = table.copy(pos_cabinet)
 		pos_drop.y = pos_drop.y + 1
 	end
+
 	-- drop the item stack
 	minetest.item_drop(stack, nil, pos_drop)
 end -- drawers.cabinet.drop_stack
@@ -124,12 +128,13 @@ function drawers.cabinet.fill_cabinet(pos_cabinet, node, stack, direction)
 		-- this is unlikely to happen
 		return stack
 	end
+
 	return handler:fill_cabinet(stack)
 end -- drawers.cabinet.fill_cabinet
 
 function drawers.cabinet.on_construct(pos_cabinet)
 	-- meta
-	local meta = core.get_meta(pos_cabinet)
+	local meta = minetest.get_meta(pos_cabinet)
 	-- create drawer upgrade inventory
 	meta:get_inventory():set_size('upgrades', 5)
 	-- set the formspec
@@ -176,7 +181,6 @@ function drawers.cabinet.on_dig(pos_cabinet, node, player)
 		stack_max = handler:stack_max_in(id)
 
 		count_stacks = math.floor(count / stack_max) + 1
-		-- TODO: test if this works when empty, in could, as we + 1
 		repeat
 			pos_rand = drawers.cabinet.randomize_pos(pos_cabinet)
 			if 1 == count_stacks then
@@ -224,6 +228,7 @@ function drawers.cabinet.take(pos_cabinet, stack)
 		-- this is unlikely to happen if called through node methods
 		return ItemStack()
 	end
+
 	return handler:take(stack)
 end -- drawers.cabinet.take
 
@@ -232,6 +237,7 @@ function drawers.cabinet.upgrade_update(pos_cabinet, list_name)
 	if 'upgrades' ~= list_name then
 		return
 	end
+
 	-- fetch handler for this cabinet
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then

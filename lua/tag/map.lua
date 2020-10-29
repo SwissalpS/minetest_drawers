@@ -1,8 +1,8 @@
 --
 -- drawers/lua/tag/map.lua
 --
--- TODO: this could now be moved back into tag.lua, not sure if it needs to
 -- maps tags to cabinets and deals with spawning and destroying tags
+-- TODO: this could now be moved back into tag.lua, not sure if it needs to
 drawers.tag.map = {}
 
 -- helper for spawn_for()
@@ -18,7 +18,7 @@ local function rotate_tag(bdir, object)
 	if bdir.x > 0 then object:set_yaw(1.5 * math.pi) end
 end
 
--- create tags for the cabinet at position pos
+-- create tags for the cabinet at position pos_cabinet
 function drawers.tag.map.spawn_for(pos_cabinet)
 	local node = minetest.get_node_or_nil(pos_cabinet)
 	if not node then return end
@@ -119,26 +119,34 @@ function drawers.tag.map.spawn_for(pos_cabinet)
 	end -- switch cabinet type
 end -- drawers.tag.map.spawn_for
 
+-- TODO sort
 function drawers.tag.map.cache_tag(tag)
 	local pos_hash = minetest.hash_node_position(tag.pos_cabinet)
 	if not drawers.tag.tags[pos_hash] then
 		drawers.tag.tags[pos_hash] = {}
 	end
+
 	local id = tonumber(tag.tag_id)
+	-- TODO do we still get nil id on migration?
 	if nil == id or 0 == id then
 		id = 1
 	end
 	drawers.tag.tags[pos_hash][id] = tag
-end
+end -- drawers.tag.map.cache_tag
 
 -- remove tags for cabinet at position pos
 function drawers.tag.map.remove_for(pos_cabinet)
 	local objects = minetest.get_objects_inside_radius(pos_cabinet, 0.56)
-	if not objects then return end
+	if not objects then
+		return
+	end
 
 	local luaentity, object
 	local index = #objects
-	if 0 == index then return end
+	if 0 == index then
+		return
+	end
+
 	repeat
 		object = objects[index]
 		luaentity = object:get_luaentity()
@@ -156,9 +164,13 @@ function drawers.tag.map.tag_for(pos_cabinet, tag_id)
 	local tags = drawers.tag.map.tags_for(pos_cabinet)
 	if tags then
 		local id = tonumber(tag_id)
-		if 0 == id then id = 1 end
+		if 0 == id then
+			id = 1
+		end
+
 		return tags[id]
 	end
+
 	return nil
 end -- drawers.tag.map.tag_for
 

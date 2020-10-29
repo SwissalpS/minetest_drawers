@@ -1,13 +1,16 @@
 --
 -- drawers/lua/tag/init.lua
 --
--- tag is the entity thet keeps track of drawers in a cabinet
+-- tag is the entity thet shows what is in drawers of a cabinet
 -- (used to be called visual)
+-- It refers to handler for player interactions and to get data on what to
+-- show players. It no longer plays a vital role in storing data. All it needs
+-- to know, is it's tag_id (index within cabinet) And even if that should be
+-- lost/corrupted, that has no influence for player's storage.
 
 -- may be referenced as dt or dtag
 drawers.tag = {}
--- hacky cache to keep track of tags
--- TODO: make sure deactivated ones are dereferenced unless that makes no sense
+-- cache to keep track of tags
 drawers.tag.tags = {}
 
 dofile(drawers.modpath .. '/lua/tag/gui.lua')

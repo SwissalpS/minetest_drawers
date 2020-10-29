@@ -1,7 +1,6 @@
 --
 -- drawers/lua/tag/gui.lua
 --
---
 -- Load support for intllib.
 local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 
@@ -20,9 +19,10 @@ function drawers.tag.gui.generate_infotext(description, count, max_count, locked
 		text = S('@1 @2 (@3% full)', tostring(count), description, tostring(percent))
 	end
 	if locked_to then
-		text = text .. '\13' .. S('Locked to: ') .. locked_to
+		text = text .. '\n' .. S('Locked to: ') .. locked_to
 	end
-	return text .. '\13\13\13\13\13'
+
+	return text .. '\n\n\n\n\n'
 end -- drawers.tag.gui.generate_infotext
 
 function drawers.tag.gui.get_image(name)

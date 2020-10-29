@@ -3,9 +3,6 @@
 --
 -- common formspec snippets
 
--- Load support for intllib.
---local S, NS = dofile(drawers.modpath .. '/intllib.lua')
-
 -- may be referenced locally as dg or dgui
 drawers.gui = {}
 

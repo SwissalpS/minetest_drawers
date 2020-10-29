@@ -6,7 +6,9 @@ local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 drawers.controller.gui = {}
 
 local list_width = '8'
-if drawers.has_mcl_core then list_width = '9' end
+if drawers.has_mcl_core then
+	list_width = '9'
+end
 
 function drawers.controller.gui.formspec(pos_controller)
 	local use_all = core.get_meta(pos_controller):get_int('use_all')
@@ -17,7 +19,7 @@ function drawers.controller.gui.formspec(pos_controller)
 		.. drawers.gui.slots
 		.. 'label[0,0;' .. S('Drawer Controller') .. ']'
 		.. 'list[current_name;src;3.5,1.75;1,1;]'
-		-- TODO what is the reason for putting player list in twice?
+		-- TODO what is the reason for splitting player list, just looks?
 		.. 'list[current_player;main;0,4.65;' .. list_width .. ',1;]'
 		.. 'list[current_player;main;0,5.9;' .. list_width .. ',3;'
 		 .. list_width .. ']'

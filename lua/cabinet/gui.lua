@@ -16,7 +16,9 @@ function drawers.cabinet.gui.upgrade_slots_background(x, y)
 end -- drawers.cabinet.gui.upgrade_slots_background
 
 local list_width = '8'
-if drawers.has_mcl_core then list_width = '9' end
+if drawers.has_mcl_core then
+	list_width = '9'
+end
 
 drawers.cabinet.gui.formspec = 'size[' .. list_width .. ',7]'
 	.. 'list[context;upgrades;2,0.5;5,1;]'

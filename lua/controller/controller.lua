@@ -14,12 +14,15 @@ local function contains_pos(list, pos)
 	if 0 == index then
 		return false
 	end
+
 	repeat
 		if is_same_pos(pos, list[index]) then
 			return true
 		end
+
 		index = index - 1
 	until 0 == index
+
 	return false
 end -- contains_pos
 
@@ -36,8 +39,10 @@ local function pos_in_range(pos1, pos2)
 		if value > drawers.settings.controller_range then
 			return false
 		end
+
 		index = index - 1
 	until 0 == index
+
 	return true
 end -- pos_in_range
 
@@ -51,6 +56,7 @@ local function add_cabinet_to_index(pos_cabinet, net_index)
 		-- this should not happen, since this has already been checked
 		return
 	end
+
 	local item_name
 	local free_space
 	local last_best
@@ -92,6 +98,7 @@ function drawers.controller.allow_metadata_inventory_move(pos_controller,
 	local meta = minetest.get_meta(pos_controller)
 	local inventory = meta:get_inventory()
 	local stack = inventory:get_stack(from_list, from_index)
+
 	return drawers.controller.allow_metadata_inventory_put(
 						pos_controller, to_list, to_index, stack, player)
 end -- drawers.controller.allow_metadata_inventory_move
@@ -106,11 +113,14 @@ function drawers.controller.allow_metadata_inventory_put(
 	if 'src' ~= list_name then
 		return 0
 	end
+
 	-- when request is from tubes, then there is no player to check
 	if player and minetest.is_protected(pos_controller, player:get_player_name()) then
 		return 0
 	end
+
 	local space = drawers.controller.can_insert(pos_controller, stack)
+
 	return space
 end -- drawers.controller.allow_metadata_inventory_put
 
@@ -124,6 +134,7 @@ function drawers.controller.allow_metadata_inventory_take(pos_controller,
 	if minetest.is_protected(pos_controller, player:get_player_name()) then
 		return 0
 	end
+
 	-- let them have any amount, seeing that they got it in there already
 	return stack:get_count()
 end -- drawers.controller.allow_metadata_inventory_take
@@ -131,6 +142,7 @@ end -- drawers.controller.allow_metadata_inventory_take
 function drawers.controller.can_dig(pos_controller, player)
 	local meta = minetest.get_meta(pos_controller);
 	local inventory = meta:get_inventory()
+
 	return inventory:is_empty('src')
 end
 
@@ -149,9 +161,15 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 	local pos_cabinet
 	local checked
 
-				-- using short field names as this table will be in meta
-				-- and sereialized a lot
-				-- p = priority; c = coordinate; s = space; i = id; a = alternatives
+	-- using short field names as this table will be in meta
+	-- and sereialized a lot
+	-- p = priority; c = coordinate; s = space; i = id; a = alternatives
+	-- item_index = {
+	--	p = { c = pos, s = space, i = id },
+	--	a = {
+	--		{ c = pos, i = id }, { ... }, ...
+	--	}
+	--}
 	if item_index then
 		-- there seem to be drawers with this item in them
 		pos_cabinet = item_index.p.c
@@ -161,9 +179,11 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 			if space_found >= stack_count then
 				return stack_count
 			end
+
 			if not use_all then
 				return space_found
 			end
+
 			index = #item_index.a
 			if 0 == index then
 				scan_needed = true
@@ -181,11 +201,13 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 							if space_found >= stack_count then
 								return stack_count
 							end
+
 						else
 							scan_needed = true
 							break
 						end -- if got handler
 					end -- if position not yet checked
+
 					index = index - 1
 				until 0 == index
 			end -- if got alternatives
@@ -202,6 +224,7 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 					if space_found >= stack_count then
 						return stack_count
 					end
+
 					index = #empty_index.a
 					if 0 == index then
 						scan_needed = true
@@ -219,11 +242,14 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 									if space_found >= stack_count then
 										return stack_count
 									end
+
 								else
 									scan_needed = true
 									break
 								end -- if got handler
+
 							end -- if position not yet checked
+
 							index = index - 1
 						until 0 == index
 					end -- if got alternatives
@@ -245,9 +271,11 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 			if space_found >= stack_count then
 				return stack_count
 			end
+
 			if not use_all then
 				return space_found
 			end
+
 			index = #empty_index.a
 			if 0 == index then
 				scan_needed = true
@@ -265,11 +293,13 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 							if space_found >= stack_count then
 								return stack_count
 							end
+
 						else
 							scan_needed = true
 							break
 						end -- if got handler
 					end -- if position not yet checked
+
 					index = index - 1
 				until 0 == index
 			end -- if got alternatives
@@ -281,13 +311,17 @@ function drawers.controller.can_insert(pos_controller, stack, have_scanned)
 		-- no space, maybe reindexing may help
 		scan_needed = true
 	end
+
 	if scan_needed then
 		if have_scanned then
 			return space_found
 		end
+
 		drawers.controller.scan_cabinets(pos_controller)
+
 		return drawers.controller.can_insert(pos_controller, stack, true)
 	end
+
 	return space_found
 end -- drawers.controller.can_insert
 
@@ -296,7 +330,6 @@ end -- drawers.controller.can_insert
 -- this method assumes that space had been checked beforehand which means
 -- net_index is up to date.
 function drawers.controller.fill_net(pos_controller, stack)
-
 	local use_all = 0 < minetest.get_meta(pos_controller):get_int('use_all')
 	local item_name = stack:get_name()
 	local stack_count = stack:get_count()
@@ -304,10 +337,7 @@ function drawers.controller.fill_net(pos_controller, stack)
 	local net_index = minetest.deserialize(meta:get_string('net_index'))
 	local item_index = net_index[item_name]
 	local empty_index = net_index[EMPTY]
-	local handler
-	local index
-	local pos_cabinet
-	local checked
+	local handler, index, pos_cabinet, checked
 	local leftover = stack
 
 	if item_index then
@@ -317,10 +347,12 @@ function drawers.controller.fill_net(pos_controller, stack)
 			-- should not happen, but if it does we fail silently
 			return leftover
 		end
+
 		leftover = handler:fill_cabinet(leftover)
 		if not use_all or 0 >= leftover:get_count() then
 			return leftover
 		end
+
 		index = #item_index.a
 		if 0 < index then
 			checked = { table.copy(pos_cabinet) }
@@ -333,8 +365,10 @@ function drawers.controller.fill_net(pos_controller, stack)
 						if 0 >= leftover:get_count() then
 							return leftover
 						end
+
 					end -- if got handler
 				end -- if position not yet used
+
 				index = index - 1
 			until 0 == index
 		end -- if got any alternatives
@@ -348,10 +382,12 @@ function drawers.controller.fill_net(pos_controller, stack)
 			-- should not happen, but if it does we fail silently
 			return leftover
 		end
+
 		leftover = handler:fill_cabinet(leftover)
 		if not use_all or 0 >= leftover:get_count() then
 			return leftover
 		end
+
 		index = #empty_index.a
 		if 0 < index then
 			checked = { table.copy(pos_cabinet) }
@@ -364,12 +400,15 @@ function drawers.controller.fill_net(pos_controller, stack)
 						if 0 >= leftover:get_count() then
 							return leftover
 						end
+
 					end -- if got handler
 				end -- if position not yet used
+
 				index = index - 1
 			until 0 == index
 		end -- if got any alternatives
 	end -- if got empty primary
+
 	return leftover
 end -- drawers.controller.fill_net
 
@@ -386,6 +425,7 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 	if 0 == index then
 		return found_positions
 	end
+
 	local pos_new
 	repeat
 		pos_new = new_positions[index]
@@ -401,6 +441,7 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 			-- search for other drawers from the new position
 			drawers.controller.find_connected(pos_controller, pos_new, found_positions)
 		end
+
 		index = index - 1
 	until 0 == index
 
@@ -425,6 +466,7 @@ function drawers.controller.on_blast(pos_controller)
 --	default.get_inventory_drops(pos_controller, 'upgrades', drops)
 	table.insert(drops, 'drawers:controller')
 	minetest.remove_node(pos_controller)
+
 	return drops
 end -- drawers.controller.on_blast
 
@@ -447,7 +489,6 @@ end -- drawers.controller.on_construct
 function drawers.controller.on_metadata_inventory_put(pos_controller, list_name,
 														index, stack, player)
 
-print('controller_on_metadata_inventory_put')
 	if 'src' ~= list_name then
 		return
 	end
@@ -464,6 +505,7 @@ function drawers.controller.on_receive_fields(pos_controller, formname, fields, 
 	if fields.save_channel then
 		meta:set_string('channel', fields.channel)
 	end
+
 	if fields.use_all then
 		-- keep as int to a) reduce space used in meta
 		-- b) permit possible later extension to be a hash of toggles
@@ -489,6 +531,7 @@ function drawers.controller.scan_cabinets(pos_controller)
 		until 0 == index
 	end
 	meta:set_string('net_index', minetest.serialize(net_index))
+
 	return net_index
 end -- drawers.controller.scan_cabinets
 
@@ -501,6 +544,7 @@ function drawers.controller.take(pos_controller, stack)
 	if not minetest.registered_items[item_name] then
 		return ItemStack()
 	end
+
 	-- the net_index is always out of date, so the easy fix is to scan again
 	-- any time items are requested. This saves us a lot of possible bugs like
 	-- the one where wrong items were returned.
@@ -514,6 +558,7 @@ function drawers.controller.take(pos_controller, stack)
 		-- we can't do anything: the requested item doesn't exist
 		return ItemStack()
 	end
+
 	-- limit request to valid stack size, cabinet handler will do the same
 	local stack_max = minetest.registered_items[item_name].stack_max
 	local requested_count = math.min(stack:get_count(), stack_max)
@@ -524,11 +569,13 @@ function drawers.controller.take(pos_controller, stack)
 	if taken_count == requested_count or (not use_all) then
 		return taken_stack
 	end
+
 	local index = #item_index.a
 	if 0 == index then
 		-- no alternatives, return what we got
 		return taken_stack
 	end
+
 	local checked = { pos_cabinet }
 	-- we initialize here with name and not with taken_stack because taken_stack
 	-- could have name of ''
@@ -547,10 +594,12 @@ function drawers.controller.take(pos_controller, stack)
 			-- could have name of ''
 			return_stack:set_count(return_stack:get_count() + taken_count)
 		end
+
 		index = index - 1
 	until 0 == index or 0 >= count
 	-- make sure name is set correctly
 	return_stack:set_name(item_name)
+
 	return return_stack
 end -- drawers.controller.take
 
@@ -561,10 +610,12 @@ function drawers.controller.update_controllers_near(pos_node)
 		vector.add(pos_node, drawers.settings.controller_range),
 		{ 'drawers:controller' }
 	)
+
 	local index = #positions
 	if 0 == index then
 		return
 	end
+
 	local pos_controller
 	repeat
 		pos_controller = positions[index]
@@ -596,7 +647,6 @@ function drawers.controller.update_network_caches(pos_controller)
 			end -- if a cabinet
 			index = index - 1
 		until 0 == index
-	else
 	end
 	-- and stash this index for later reference
 	local meta = minetest.get_meta(pos_controller)

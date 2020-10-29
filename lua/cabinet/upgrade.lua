@@ -15,13 +15,8 @@ function drawers.upgrade.register(name, def)
 	def.groups.drawers_increment = def.groups.drawers_increment or base_slot_count
 
 	def.inventory_image = def.inventory_image or 'drawers_upgrade_template.png'
-	-- TODO: discuss if this had a good reason to be 1 and if 5 makes sense
-	--		or if we simply set to 99 for default and 1 for MCL servers, since
-	--		I suspect that to be the reason for 1 to have been used.
-	--		Another possibility is that original coders did not want to deal with
-	--		players putting them in the drawers instead of the upgrade slots.
-	--		since unstackables can't be put in drawers...
-	def.stack_max = 5 -- 99
+	-- TODO: discuss stack_max for upgrades
+	def.stack_max = 5 -- minetest.nodedef_default.stack_max or 99
 
 	-- extract recipe item, this is not cached in item definition
 	local recipe_item = def.recipe_item or 'air'

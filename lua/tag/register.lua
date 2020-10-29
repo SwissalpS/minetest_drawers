@@ -5,14 +5,16 @@
 local entity_def = {
 	initial_properties = {
 		collide_with_objects = false,
-		collisionbox = { -0.4374, -0.4374, 0,  0.4374, 0.4374, 0 }, -- for param2 0, 2
+		-- for param2 0, 2
+		collisionbox = { -0.4374, -0.4374, 0,  0.4374, 0.4374, 0 },
 		hp_max = 1,
 		initial_sprite_basepos = { x = 0, y = 0 },
 		is_visible = true,
 		physical = false,
 		spritediv = { x = 1, y = 1 },
 		textures = { 'blank.png' },
-		visual = 'upright_sprite', -- 'wielditem' for items without inv img?
+		-- 'wielditem' for items without inv img?
+		visual = 'upright_sprite',
 		visual_size = { x = 0.6, y = 0.6 },
 	},
 
@@ -23,6 +25,7 @@ local entity_def = {
 	on_activate = drawers.tag.on_activate,
 	-- called when player right clicks entity with or without something in hand.
 	-- to put items in
+	-- TODO rename to fill and take to be consistent with other methods
 	on_rightclick = drawers.tag.handle_use_put,
 	-- to take items out
 	on_punch = drawers.tag.handle_punch_take,
@@ -32,7 +35,6 @@ local entity_def = {
 	-- called whenever items are put in or taken out manually
 	-- custom field, could be renamed
 	play_interact_sound = drawers.tag.play_interact_sound,
-	migrate_cabinet_meta = drawers.tag.migrate_cabinet_meta
 
 } -- entity_def
 
