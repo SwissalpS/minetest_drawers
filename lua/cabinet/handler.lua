@@ -372,9 +372,7 @@ end -- player_take
 -- If another mod wants to manipulate meta, theis is what to call to refresh it.
 -- updates visuals
 function Handler:read_meta()
-print('handler read_meta')
 	if not self.is_valid then
-print('Handler:read_meta:KO:not valid handler object')
 		-- TODO: do we need this check anymore?
 		--return nil
 	end
@@ -393,7 +391,6 @@ print('Handler:read_meta:KO:not valid handler object')
 	local tag_id, name, stack_max, max_count
 	if needs_init then
 		-- must be initialized, probably drawer has only just been placed
-print('Handler:read_meta:new drawer was just placed')
 		self.slots_per_drawer = math.floor(
 			drawers.settings.base_slot_count / self.drawer_count)
 		stack_max = minetest.nodedef_default.stack_max or 99
