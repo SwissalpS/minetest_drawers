@@ -125,7 +125,9 @@ function drawers.tag.map.cache_tag(tag)
 		drawers.tag.tags[pos_hash] = {}
 	end
 	local id = tonumber(tag.tag_id)
-	if 0 == id then id = 1 end
+	if nil == id or 0 == id then
+		id = 1
+	end
 	drawers.tag.tags[pos_hash][id] = tag
 end
 

@@ -95,6 +95,10 @@ function drawers.tag:on_activate(static_data_serialized, delta_seconds)
 --	if data then
 	if '' == static_data_serialized then
 		self.tag_id = drawers.tmp.new_tag_id
+	elseif nil == tonumber(static_data_serialized) then
+		self.tag_id = ''
+		self.object:remove()
+		return
 	else
 		self.tag_id = static_data_serialized
 	end
