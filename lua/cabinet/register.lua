@@ -31,6 +31,10 @@ function drawers.cabinet.register(name, def)
 	def.on_metadata_inventory_put = drawers.cabinet.upgrade_update
 	def.on_metadata_inventory_take = drawers.cabinet.upgrade_update
 
+	if drawers.has_jumpdrive
+		def.on_movenode = def.on_movenode or drawers.cabinet.after_jump
+	end
+
 	if drawers.has_screwdriver then
 		def.on_rotate = def.on_rotate or screwdriver.disallow
 	end

@@ -89,6 +89,14 @@ local function add_cabinet_to_index(pos_cabinet, net_index)
 	until 0 == id
 end -- add_cabinet_to_index
 
+--- called after jumpdrive has jumped and is moving all nodes
+-- see https://github.com/mt-mods/jumpdrive/blob/d836cc0569b26f1e155d7eb53cb1e1b13ad927da/move/move.lua#L148
+-- returns nothing
+function drawers.controller.after_jump(pos_from, pos_to, context)
+	-- update the net_index
+	minetest.after(1, drawers.controller.update_network_caches, pos_to)
+end -- drawers.controller.after_jump
+
 --- called when user moves items around inventories
 -- TODO: check when and what really happens, don't think this is used any more
 -- return amount of items that can be put

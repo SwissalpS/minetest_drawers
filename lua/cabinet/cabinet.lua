@@ -3,6 +3,16 @@
 --
 -- cabinet functions that are not part of register or in Handler
 
+--- called after jumpdrive has jumped and is moving all nodes
+-- see https://github.com/mt-mods/jumpdrive/blob/d836cc0569b26f1e155d7eb53cb1e1b13ad927da/move/move.lua#L148
+-- returns nothing
+function drawers.cabinet.after_jump(pos_from, pos_to, context)
+	-- remove old tags and handler
+	minetest.after(1, drawers.cabinet.on_destruct, pos_from)
+	-- spawn new entities which also creates new handler instance
+	minetest.after(1, drawers.tag.map.spawn_for, pos_to)
+end -- drawers.cabinet.after_jump
+
 -- return number of upgrade items allowed to put
 function drawers.cabinet.allow_upgrade_put(pos_cabinet, list_name, index, stack, player)
 	-- no need to continue if it's not upgrades list.
