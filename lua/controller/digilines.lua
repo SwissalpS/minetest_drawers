@@ -18,6 +18,10 @@ function drawers.controller.on_digiline_receive(pos_controller, _, channel, msg)
 	-- msg can be string 'default:cobble 34'
 	-- or table { name = 'default:cobble', count = 34 }
 	local stack = ItemStack(msg)
+	if stack:is_empty() then
+		-- no need to check for nothing
+		return
+	end
 	local taken_stack = drawers.controller.take(pos_controller, stack)
 	if 0 >= taken_stack:get_count() then
 		return
