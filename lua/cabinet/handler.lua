@@ -43,6 +43,7 @@ end -- new
 --- Inquire how much of stack fits in all drawers of cabinet
 -- called by pipeworks compatible nodes
 function Handler:can_insert(stack)
+	self:mark_interact()
 	local total = 0
 	local stack_count = stack:get_count()
 	local id = self.drawer_count
@@ -95,6 +96,7 @@ end -- can_insert_in
 --- table of 3 most important values of a drawer
 -- returns table with count, name and max_count fields
 function Handler:contents_in(tag_id)
+	self:mark_interact()
 	return {
 		count = tonumber(self:count_in(tag_id)),
 		name = self:name_in(tag_id),
@@ -106,6 +108,7 @@ end -- contents_in
 -- returns a number or an empty string
 -- TODO is this still a legacy thing with the string?
 function Handler:count_in(tag_id)
+	self:mark_interact()
 	return self.count[tonumber(tag_id)] or ''
 end --
 
@@ -176,11 +179,13 @@ end -- fill_drawer
 
 --- amount of space in drawer
 function Handler:free_space_in(tag_id)
+	self:mark_interact()
 	return tonumber(self:max_count_in(tag_id)) - tonumber(self:count_in(tag_id))
 end --
 
 -- infotext for drawer with id tag_id
 function Handler:infotext_in(tag_id)
+	self:mark_interact()
 	return self.infotext[tonumber(tag_id)] or ''
 end
 
@@ -211,15 +216,24 @@ end -- is_cabinet_missing
 
 -- seems like not used (yet)
 function Handler:locked_in(tag_id)
+	self:mark_interact()
 	return self.locked[tonumber(tag_id)] or 0
 end
 
+--- store current time for cleanup functions to have an idea of when this
+-- Handler was last used.
+function Handler:mark_interact()
+	self.last_interact = os.clock()
+end
+
 function Handler:max_count_in(tag_id)
+	self:mark_interact()
 	return self.max_count[tonumber(tag_id)] or 0
 end
 
 --- returns item name of drawer
 function Handler:name_in(tag_id)
+	self:mark_interact()
 	return self.name[tonumber(tag_id)] or ''
 end
 
@@ -527,6 +541,7 @@ function Handler:set_slots_per_drawer(slots_per_drawer)
 end -- set_slots_per_drawer
 
 function Handler:stack_max_in(tag_id)
+	self:mark_interact()
 	return self.item_stack_max[tonumber(tag_id)] or 0
 end
 
@@ -601,6 +616,7 @@ end -- take_stack_from
 --- get texture string for tag with id tag_id.
 -- returns a string
 function Handler:texture_in(tag_id)
+	self:mark_interact()
 	return self.texture[tonumber(tag_id)] or 'blank.png'
 end
 
@@ -665,6 +681,7 @@ end -- update_visibles_in
 -- called whenever a change happens
 -- returns nil if not a valid handler object or true on success
 function Handler:write_meta()
+	self:mark_interact()
 	if not self.is_valid then
 		return nil
 	end
