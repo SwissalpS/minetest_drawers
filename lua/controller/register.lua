@@ -55,7 +55,7 @@ else
 	}
 end
 
-def._digistuff_channelcopier_fieldname = 'channel' -- 'digilineChannel',
+def._digistuff_channelcopier_fieldname = 'channel'
 def.collision_box = { type = 'regular' }
 def.description = S('Drawer Controller')
 def.drawtype = 'nodebox'

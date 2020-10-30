@@ -41,6 +41,7 @@ function Handler:new(pos_cabinet)
 end -- new
 
 --- Inquire how much of stack fits in all drawers of cabinet
+-- called by pipeworks compatible nodes
 function Handler:can_insert(stack)
 	local total = 0
 	local stack_count = stack:get_count()
@@ -58,7 +59,7 @@ end -- can_insert
 
 --- Inquire how much of stack fits in drawer.
 -- returns int >= 0
--- called by pipeworks compatible nodes
+-- please prefer can_insert() whenever possible
 function Handler:can_insert_in(tag_id, stack)
 	local stack_count = stack:get_count()
 	local stack_name = stack:get_name()
