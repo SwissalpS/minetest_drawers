@@ -1,8 +1,11 @@
 Contributing to this branch of 2020 reboot
 =============================================
 [[home of this effort on github is the rw2020beta0 branch](https://github.com/SwissalpS/drawers/tree/rw2020beta0)]
+
 [[conventions we are striving toward](conventions.md)]
+
 [[scratchpad of changes for migration](rewriteChanges.md)]
+
 [[checklist for testers](checklist.md)]
 
 Currently reviewers and advisors are most wanted help to this effort.
