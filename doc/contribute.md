@@ -31,6 +31,7 @@ Drawer Cabinet
 * [x] allow removing unknown items really fast but don't allow putting them in drawers
 * [x] don't allow players to put in bigger stacks into empty drawers than can't
         even fit on a stack of that item; let alone a drawer without upgrades.
+* [ ] tested that tags don't stay behind and appear an new location when jumped with jumpdrive
 
 Drawer Cabinet Pipeworks
 -------------------------
@@ -39,17 +40,17 @@ Drawer Cabinet Pipeworks
     up from the bottom reflecting how full the cabinet is.
 * [x] tested with self contained injector
 * [ ] tested with single/stack/digiline injectors into cabinet
-* [ ] tested with single/stack/digiline injectors out of cabinet
+* [ ] (tested with single/stack/digiline injectors out of cabinet)
 
 Drawer Controller
 ------------------
-* [ ] tested that does not include cabinets belonging to other players to network (maybe this is a feature)
+* [ ] (tested that does not include cabinets belonging to other players to network, maybe this is a feature)
 * [ ] tested that can't access cabinets that are no longer connected
 * [ ] tested that index is destroyed or updated when controller has been jumped with jumpdrive
 
 Drawer Controller Digiline
 -----------------------------
-* [~] allow taking also when drawer is 100% full
+* [ ] allow taking also when drawer is 100% full
 * [ ] add command { command = 'has', name = 'mode:item' } that returns a
     boolean TODO figure out how exactly. bc next expansion requests will come
 * [ ] give correct item no matter which orientation the cabinet and controller
@@ -58,6 +59,7 @@ Drawer Controller Digiline
 
 Drawer Controller Pipeworks
 -----------------------------
+* [ ] tested that insert works correctly [[see checklist.md](doc/checklist.md)]
 
 Drawer Controller Node formspec
 --------------------------------
@@ -73,6 +75,7 @@ Drawer Compactor
 * [ ] does it go through a hard coded list sorted by priority of which items it
     should compact and how much to leave uncompacted or do we need to offer
     players options.
+* [ ] make it only available to worlds that don't have pipeworks mod or make this a server setting
 
 Translation
 -------------
@@ -87,6 +90,3 @@ Compatibility
 * [ ] jumpdrive [[see](https://github.com/mt-mods/jumpdrive/blob/d836cc0569b26f1e155d7eb53cb1e1b13ad927da/move/move.lua#L148)]
 * [ ] mesecons metrics [[see](https://github.com/minetest-monitoring/monitoring_drawers/tree/master)]
 
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc1MzU4NTIwOF19
--->
