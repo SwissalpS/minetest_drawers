@@ -18,6 +18,47 @@ local function rotate_tag(bdir, object)
 	if bdir.x > 0 then object:set_yaw(1.5 * math.pi) end
 end
 
+--- add tag reference to hash table for quick lookup
+function drawers.tag.map.cache_tag(tag)
+	local pos_hash = minetest.hash_node_position(tag.pos_cabinet)
+	if not drawers.tag.tags[pos_hash] then
+		drawers.tag.tags[pos_hash] = {}
+	end
+
+	local id = tonumber(tag.tag_id)
+	-- TODO do we still get nil id on migration?
+	if nil == id or 0 == id then
+		id = 1
+	end
+	drawers.tag.tags[pos_hash][id] = tag
+end -- drawers.tag.map.cache_tag
+
+-- remove tags for cabinet at position pos
+function drawers.tag.map.remove_for(pos_cabinet)
+	local objects = minetest.get_objects_inside_radius(pos_cabinet, 0.56)
+	if not objects then
+		return
+	end
+
+	local luaentity, object
+	local index = #objects
+	if 0 == index then
+		return
+	end
+
+	repeat
+		object = objects[index]
+		luaentity = object:get_luaentity()
+		if luaentity and 'drawers:visual' == luaentity.name then
+			object:remove()
+		end
+		index = index - 1
+	until 0 == index
+
+	local pos_hash = minetest.hash_node_position(pos_cabinet)
+	drawers.tag.tags[pos_hash] = nil
+end -- drawers.tag.map.remove_for
+
 -- create tags for the cabinet at position pos_cabinet
 function drawers.tag.map.spawn_for(pos_cabinet)
 	local node = minetest.get_node_or_nil(pos_cabinet)
@@ -118,47 +159,6 @@ function drawers.tag.map.spawn_for(pos_cabinet)
 
 	end -- switch cabinet type
 end -- drawers.tag.map.spawn_for
-
--- TODO sort
-function drawers.tag.map.cache_tag(tag)
-	local pos_hash = minetest.hash_node_position(tag.pos_cabinet)
-	if not drawers.tag.tags[pos_hash] then
-		drawers.tag.tags[pos_hash] = {}
-	end
-
-	local id = tonumber(tag.tag_id)
-	-- TODO do we still get nil id on migration?
-	if nil == id or 0 == id then
-		id = 1
-	end
-	drawers.tag.tags[pos_hash][id] = tag
-end -- drawers.tag.map.cache_tag
-
--- remove tags for cabinet at position pos
-function drawers.tag.map.remove_for(pos_cabinet)
-	local objects = minetest.get_objects_inside_radius(pos_cabinet, 0.56)
-	if not objects then
-		return
-	end
-
-	local luaentity, object
-	local index = #objects
-	if 0 == index then
-		return
-	end
-
-	repeat
-		object = objects[index]
-		luaentity = object:get_luaentity()
-		if luaentity and 'drawers:visual' == luaentity.name then
-			object:remove()
-		end
-		index = index - 1
-	until 0 == index
-
-	local pos_hash = minetest.hash_node_position(pos_cabinet)
-	drawers.tag.tags[pos_hash] = nil
-end -- drawers.tag.map.remove_for
 
 function drawers.tag.map.tag_for(pos_cabinet, tag_id)
 	local tags = drawers.tag.map.tags_for(pos_cabinet)
