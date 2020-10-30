@@ -84,5 +84,5 @@ local S = minetest.get_translator("drawers")
 
 Compatibility
 ----------------
-* [ ] jumpdrive
+* [ ] jumpdrive [[see](https://github.com/mt-mods/jumpdrive/blob/d836cc0569b26f1e155d7eb53cb1e1b13ad927da/move/move.lua#L148)]
 * [ ] mesecons metrics
