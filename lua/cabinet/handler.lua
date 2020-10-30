@@ -550,7 +550,6 @@ end
 -- updates visuals
 -- see also Handler:take_from(tag_id)
 function Handler:take(stack)
-print('Handler:take', stack:to_string())
 	local item_name = stack:get_name()
 	local return_stack = ItemStack()
 	if not minetest.registered_items[item_name] then
