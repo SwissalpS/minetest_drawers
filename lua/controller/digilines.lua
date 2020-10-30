@@ -22,6 +22,7 @@ function drawers.controller.on_digiline_receive(pos_controller, _, channel, msg)
 		-- no need to check for nothing
 		return
 	end
+
 	local taken_stack = drawers.controller.take(pos_controller, stack)
 	if 0 >= taken_stack:get_count() then
 		return
