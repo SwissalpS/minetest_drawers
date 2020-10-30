@@ -633,6 +633,7 @@ function drawers.controller.update_network_caches(pos_controller)
 	local all_cabinets = {}
 	local all_compactors = {}
 	local pos_node, handler, id
+	local node
 	local index = #all_conected
 	if 0 < index then
 		repeat
@@ -642,8 +643,10 @@ function drawers.controller.update_network_caches(pos_controller)
 			if handler then
 				table.insert(all_cabinets, pos_node)
 			else
-				-- TODO check if it's a compactor
-				table.insert(all_compactors, pos_node)
+				node = minetest.get_node(pos_node)
+				if 'drawers:compactor' == node.name then
+					table.insert(all_compactors, pos_node)
+				end
 			end -- if a cabinet
 			index = index - 1
 		until 0 == index
