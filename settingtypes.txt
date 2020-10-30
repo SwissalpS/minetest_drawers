@@ -1,0 +1,7 @@
+# Set this to true, if you do not want to use cabinets with only one drawer
+drawers_disable_1x1 (do not use cabinets with one drawer) bool false
+# Set this to true, if you do not want to use cabinets with two drawers
+drawers_disable_1x2 (do not use cabinets with two drawers) bool false
+# Set this to true, if you do not want to use cabinets with four drawers
+drawers_disable_2x2 (do not use cabinets with four drawers) bool false
+
