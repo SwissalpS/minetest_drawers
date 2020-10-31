@@ -65,7 +65,7 @@ def.paramtype = 'light'
 def.paramtype2 = 'facedir'
 def.selection_box = { type = 'regular' }
 
-if drawers.has_jumpdrive
+if drawers.has_jumpdrive then
 	def.on_movenode = drawers.controller.on_jump
 end
 
