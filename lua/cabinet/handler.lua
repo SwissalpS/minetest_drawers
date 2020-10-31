@@ -218,6 +218,50 @@ function Handler:locked_in(tag_id)
 	return self.locked[tonumber(tag_id)] or 0
 end
 
+function Handler:migrate()
+	local tag_id, max_count, base_stack_max
+	local stack_max_factor
+	local is_single = 1 == self.drawer_count
+	local id = 1
+	repeat
+		-- single drawer cabinets did not have number
+		if is_single then
+			tag_id = ''
+		else
+			tag_id = tostring(id)
+		end
+
+		if 1 == id then
+			stack_max_factor = self.meta:get_int('stack_max_factor' .. tag_id)
+			if 0 == stack_max_factor then
+				-- not an old cabinet
+				return false
+			end
+
+			max_count = self.meta:get_int('max_count' .. tag_id)
+			base_stack_max = self.meta:get_int('base_stack_max' .. tag_id)
+			self.slots_per_drawer = max_count / base_stack_max
+		end
+
+		self.count[id] = self.meta:get_int('count' .. tag_id)
+		self.item_stack_max[id] = base_stack_max
+		self.locked[id] = 0
+		self.max_count[id] = max_count
+		self.name[id] = self.meta:get_string('name' .. tag_id)
+		-- remove old fields
+		self.meta:set_string('count' .. tag_id, '')
+		self.meta:set_string('name' .. tag_id, '')
+		self.meta:set_string('base_stack_max' .. tag_id, '')
+		self.meta:set_string('entity_infotext' .. tag_id, '')
+		self.meta:set_string('max_count' .. tag_id, '')
+		self.meta:set_string('stack_max_factor' .. tag_id, '')
+		self:update_visibles_in(id)
+		id = id + 1
+	until id > self.drawer_count
+
+	return true
+end -- migrate
+
 --- store current time for cleanup functions to have an idea of when this
 -- Handler was last used.
 function Handler:mark_interact()
@@ -393,53 +437,9 @@ function Handler:player_take(tag_id, player)
 	return changed
 end -- player_take
 
-function Handler:migrate()
-	local tag_id, max_count, base_stack_max
-	local stack_max_factor
-	local is_single = 1 == self.drawer_count
-	local id = 1
-	repeat
-		-- single drawer cabinets did not have number
-		if is_single then
-			tag_id = ''
-		else
-			tag_id = tostring(id)
-		end
-
-		if 1 == id then
-			stack_max_factor = self.meta:get_int('stack_max_factor' .. tag_id)
-			if 0 == stack_max_factor then
-				-- not an old cabinet
-				return false
-			end
-
-			max_count = self.meta:get_int('max_count' .. tag_id)
-			base_stack_max = self.meta:get_int('base_stack_max' .. tag_id)
-			self.slots_per_drawer = max_count / base_stack_max
-		end
-
-		self.count[id] = self.meta:get_int('count' .. tag_id)
-		self.item_stack_max[id] = base_stack_max
-		self.locked[id] = 0
-		self.max_count[id] = max_count
-		self.name[id] = self.meta:get_string('name' .. tag_id)
-		-- remove old fields
-		self.meta:set_string('count' .. tag_id, '')
-		self.meta:set_string('name' .. tag_id, '')
-		self.meta:set_string('base_stack_max' .. tag_id, '')
-		self.meta:set_string('entity_infotext' .. tag_id, '')
-		self.meta:set_string('max_count' .. tag_id, '')
-		self.meta:set_string('stack_max_factor' .. tag_id, '')
-		self:update_visibles_in(id)
-		id = id + 1
-	until id > self.drawer_count
-
-	return true
-end -- migrate
-
 --- reads meta from cabinet node and populates Handler object tables
 -- called by Handler:new()
--- If another mod wants to manipulate meta, theis is what to call to refresh it.
+-- If another mod wants to manipulate meta, this is what to call to refresh it.
 -- updates visuals
 function Handler:read_meta()
 	if not self.is_valid then
@@ -720,7 +720,7 @@ function drawers.cabinet.allow_item(item_name)
 	then
 		return false
 	end
-	
+
 	return true
 end -- drawers.cabinet.allow_item
 
