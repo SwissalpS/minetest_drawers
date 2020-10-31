@@ -50,6 +50,7 @@ function drawers.cabinet.allow_upgrade_take(pos_cabinet, list_name, index, stack
 end -- drawers.cabinet.allow_upgrade_take
 
 -- Returns whether a stack can be (partially) inserted to any drawer of a cabinet.
+-- called by pipeworks when attempting to insert something
 function drawers.cabinet.can_insert(pos_cabinet, node, stack, direction)
 	local handler = drawers.cabinet.handler_for(pos_cabinet, true)
 	if not handler then
@@ -57,6 +58,7 @@ function drawers.cabinet.can_insert(pos_cabinet, node, stack, direction)
 		return false
 	end
 
+	-- TODO shouldn't we pass the count on, since it's already calculated?
 	return 0 < handler:can_insert(stack)
 end -- drawers.cabinet.can_insert
 
