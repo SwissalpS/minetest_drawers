@@ -68,10 +68,8 @@ function Handler:can_insert_in(tag_id, stack)
 	if '' == stack_name
 		-- no empty stacks
 		or 0 >= stack_count
-		-- no unknown items
-		or not minetest.registered_items[stack_name]
-		-- don't allow unstackable items
-		or 1 == minetest.registered_items[stack_name].stack_max
+		-- no disallowed items
+		or not drawers.cabinet.allow_item(stack_name)
 	then
 		return 0
 	end
@@ -709,6 +707,23 @@ drawers.cabinet.handlers = {}
 
 -- ====================================================================
 -- ====================================================================
+
+--- called to check if item is allowed to be put in drawers or not
+-- returns boolean
+-- this is a separate method to allow other mods to override the check
+-- easily and disallow some other nodes.
+function drawers.cabinet.allow_item(item_name)
+	-- no unknown items
+	if not minetest.registered_items[item_name]
+		-- don't allow unstackable items
+		or 1 == minetest.registered_items[item_name].stack_max
+	then
+		return false
+	end
+	
+	return true
+end -- drawers.cabinet.allow_item
+
 -- ====================================================================
 -- ====================================================================
 
