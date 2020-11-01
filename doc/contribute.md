@@ -15,7 +15,7 @@ Goals
 * [ ] clean and maintanable code
 * [ ] runs 'gently'
 * [ ] result makes users, modders and admins happy
-* [ ] seamless migration from older versions
+* [x] seamless migration from older versions
 * [ ] callbacks and hooks...
 
 Drawer Cabinet
@@ -31,7 +31,7 @@ Drawer Cabinet
 * [x] allow removing unknown items really fast but don't allow putting them in drawers
 * [x] don't allow players to put in bigger stacks into empty drawers than can't
         even fit on a stack of that item; let alone a drawer without upgrades.
-* [ ] tested that tags don't stay behind and appear an new location when jumped with jumpdrive
+* [x] tested that tags don't stay behind and appear an new location when jumped with jumpdrive
 
 Drawer Cabinet Pipeworks
 -------------------------
@@ -46,7 +46,7 @@ Drawer Controller
 ------------------
 * [ ] (tested that does not include cabinets belonging to other players to network, maybe this is a feature)
 * [ ] tested that can't access cabinets that are no longer connected
-* [ ] tested that index is destroyed or updated when controller has been jumped with jumpdrive
+* [x] tested that index is destroyed or updated when controller has been jumped with jumpdrive
 
 Drawer Controller Digiline
 -----------------------------
@@ -79,7 +79,7 @@ Drawer Compactor
 
 Translation
 -------------
-* [ ] move from intlib to
+* [ ] move from intllib to
 ```lua
 -- Minetest Translator
 local S = minetest.get_translator("drawers")
@@ -87,6 +87,8 @@ local S = minetest.get_translator("drawers")
 
 Compatibility
 ----------------
-* [ ] jumpdrive [[see](https://github.com/mt-mods/jumpdrive/blob/d836cc0569b26f1e155d7eb53cb1e1b13ad927da/move/move.lua#L148)]
+* [x] jumpdrive [[see](https://github.com/mt-mods/jumpdrive/blob/d836cc0569b26f1e155d7eb53cb1e1b13ad927da/move/move.lua#L148)]
+        [[compatible version of jumpdrive in SwissalpS' repo drawers2020update branch](https://github.com/SwissalpS/jumpdrive/tree/drawers2020update)]
 * [ ] mesecons metrics [[see](https://github.com/minetest-monitoring/monitoring_drawers/tree/master)]
+* [ ] technic wrench -> need to change the meta keys. Also don't copy controller's indexes.
 

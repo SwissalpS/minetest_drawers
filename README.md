@@ -50,7 +50,7 @@ MineClone 2 mods are only optional dependencies for crafting recipes.
       also displayed at count 0)
       Special-key + right-click to lock,
       Special-key + left-click to un-lock.
-- [ ] Add duct tape to transport drawers
+- [ ] Add duct tape to transport drawers (other than technic:wrench or jumpdrive?)
 - [x] Support pipeworks
 - [ ] Support hoppers (needs hoppers mod change)
 - [x] Make drawers upgradable
