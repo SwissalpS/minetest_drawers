@@ -8,8 +8,10 @@ drawers.has_default = minetest.get_modpath('default')
 drawers.has_digilines = minetest.get_modpath('digilines')
 						and minetest.global_exists('digilines')
 
+--[[ we can't add jumpdrive as optional dependency as drawers is already that to jd
 drawers.has_jumpdrive = minetest.get_modpath('jumpdrive')
 						and minetest.global_exists('jumpdrive')
+--]]
 
 -- MineClone 2
 drawers.has_mcl_core = minetest.get_modpath('mcl_core')

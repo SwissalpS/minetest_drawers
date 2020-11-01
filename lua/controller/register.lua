@@ -65,9 +65,7 @@ def.paramtype = 'light'
 def.paramtype2 = 'facedir'
 def.selection_box = { type = 'regular' }
 
-if drawers.has_jumpdrive then
-	def.on_movenode = drawers.controller.on_jump
-end
+def.on_movenode = drawers.controller.on_jump
 
 -- add pipe connectors, if pipeworks is enabled
 if drawers.has_pipeworks then
