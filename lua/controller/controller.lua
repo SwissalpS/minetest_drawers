@@ -1,6 +1,7 @@
 --
 --- drawers/lua/controller/controller.lua
 --
+local S, NS = dofile(drawers.modpath .. '/intllib.lua')
 local EMPTY = drawers.controller.key_empty
 
 --- helper for contains_pos()
@@ -441,6 +442,21 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 			drawers.controller.find_connected(pos_controller, pos_new, found_positions)
 		end
 
+		-- safety limit network size to avoid stack overflow and lag in general
+		if #found_positions >= drawers.settings.max_network_nodes then
+			-- TODO how do we notify owner? maybe colouring nodes red?
+			--		the controller may be hidden, so we can't rely on it's infotext
+			--		being seen
+			-- log a warning to admins
+			local warning = '[drawers] ALERT: Huge drawers network detected'
+				.. ' at: ' .. minetest.pos_to_string(pos_controller)
+				.. '. This network will not work as expected, since drawers'
+				.. ' mod is aborting the indexing process.'
+			minetest.log('warning', warning)
+
+			return found_positions
+		end
+
 		index = index - 1
 	until 0 == index
 
@@ -695,6 +711,13 @@ function drawers.controller.update_network_caches(pos_controller)
 	local meta = minetest.get_meta(pos_controller)
 	meta:set_string('cabinets', minetest.serialize(all_cabinets))
 	meta:set_string('compactors', minetest.serialize(all_compactors))
+	-- update infotext
+	local infotext = ''
+	if #found_positions >= drawers.settings.max_network_nodes then
+		infotext = S('Your network is too big!')
+	end
+	meta:set_string('infotext', infotext)
+
 	drawers.controller.scan_cabinets(pos_controller)
 
 	if not drawers.settings.be_verbose then

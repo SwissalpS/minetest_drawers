@@ -21,3 +21,7 @@ drawers_disable_1x2 (do not use cabinets with two drawers) bool false
 # Set this to true, if you do not want to use cabinets with four drawers
 drawers_disable_2x2 (do not use cabinets with four drawers) bool false
 
+# Maximum amount of nodes allowed in a controller's network. This includes the
+# controller and any other connector nodes with group drawers_connector
+drawers_max_network_nodes (max network size) int 4000 2 9000
+

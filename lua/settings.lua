@@ -29,6 +29,9 @@ drawers.settings.be_verbose = minetest.settings:get_bool('drawers_be_verbose', f
 -- radius to index cabinets around controllers
 drawers.settings.controller_range = tonumber(minetest.settings:get(
 										'drawers_controller_range_max') or 14)
+
+drawers.settings.max_network_nodes = tonumber(minetest.settings:get(
+										'drawers_max_network_nodes') or 4000)
 -- which cabinet sizes are available on this server
 drawers.settings.use_cabinet_1x1 = not minetest.settings:get_bool(
 										'drawers_disable_1x1', false)
