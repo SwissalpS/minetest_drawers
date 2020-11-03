@@ -32,6 +32,11 @@ drawers.settings.controller_range = tonumber(minetest.settings:get(
 
 drawers.settings.max_network_nodes = tonumber(minetest.settings:get(
 										'drawers_max_network_nodes') or 4000)
+
+-- Time limit when indexing the network, in seconds
+drawers.settings.max_us = 1000000 * tonumber(minetest.settings:get(
+										'drawers_max_seconds') or 0.75)
+
 -- which cabinet sizes are available on this server
 drawers.settings.use_cabinet_1x1 = not minetest.settings:get_bool(
 										'drawers_disable_1x1', false)

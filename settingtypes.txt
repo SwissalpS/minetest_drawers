@@ -25,3 +25,8 @@ drawers_disable_2x2 (do not use cabinets with four drawers) bool false
 # controller and any other connector nodes with group drawers_connector
 drawers_max_network_nodes (max network size) int 4000 2 9000
 
+# Maximum amount of seconds a network indexing job is allowed to take.
+# It can take a while for the recursion to exit out of the many levels, so
+# choose a rather low value here
+drawers_max_seconds (max seconds time-out) float 0.75 0.00001 55
+

@@ -414,7 +414,7 @@ function drawers.controller.fill_net(pos_controller, stack)
 end -- drawers.controller.fill_net
 
 --- search for cabinets, trim that are connected to controller
-function drawers.controller.find_connected(pos_controller, pos_next, found_positions)
+function drawers.controller.find_connected(us_stop, pos_controller, pos_next, found_positions)
 	found_positions = found_positions or {}
 	pos_next = pos_next or pos_controller
 
@@ -429,6 +429,10 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 
 	local pos_new
 	repeat
+		if minetest.get_us_time() >= us_stop then
+			return found_positions
+		end
+
 		pos_new = new_positions[index]
 		-- check that this node hasn't been indexed yet and is in range
 		if
@@ -438,8 +442,10 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 		then
 			-- add new position
 			table.insert(found_positions, pos_new)
+
 			-- search for other drawers from the new position
-			drawers.controller.find_connected(pos_controller, pos_new, found_positions)
+			drawers.controller.find_connected(
+							us_stop, pos_controller, pos_new, found_positions)
 		end
 
 		-- safety limit network size to avoid stack overflow and lag in general
@@ -675,8 +681,11 @@ end -- drawers.controller.update_controllers_near
 -- cabinets, trims, or controllers (soon also compacters)
 function drawers.controller.update_network_caches(pos_controller)
 	local us_0 = minetest.get_us_time()
+	local us_stop = us_0 + drawers.settings.max_us
+	local meta = minetest.get_meta(pos_controller)
+	meta:set_string('infotext', S('Scanning network...'))
 	-- this list also contains other controller, compactor and trim nodes
-	local found_positions = drawers.controller.find_connected(pos_controller)
+	local found_positions = drawers.controller.find_connected(us_stop, pos_controller)
 
 	if drawers.settings.be_verbose then
 		local us_1 = minetest.get_us_time()
@@ -708,15 +717,26 @@ function drawers.controller.update_network_caches(pos_controller)
 		until 0 == index
 	end
 	-- stash this index for later reference
-	local meta = minetest.get_meta(pos_controller)
 	meta:set_string('cabinets', minetest.serialize(all_cabinets))
 	meta:set_string('compactors', minetest.serialize(all_compactors))
 	-- update infotext
+	local abort = false
 	local infotext = ''
 	if #found_positions >= drawers.settings.max_network_nodes then
 		infotext = S('Your network is too big!')
+		abort = true
+	end
+	if minetest.get_us_time() >= us_stop then
+		infotext = infotext .. S(' Scanning timed out, remove some cabinets.')
+		abort = true
 	end
 	meta:set_string('infotext', infotext)
+
+	if abort then
+		minetest.log('warning', '[drawers] aborted update_network_caches('
+			.. minetest.pos_to_string(pos_controller) .. ')')
+		return
+	end
 
 	drawers.controller.scan_cabinets(pos_controller)
 
