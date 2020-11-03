@@ -25,11 +25,12 @@ drawers.settings.after_jump_delay = math.abs(tonumber(minetest.settings:get(
 
 -- log more info about activity
 drawers.settings.be_verbose = minetest.settings:get_bool('drawers_be_verbose', false)
+
+-- radius to index cabinets around controllers
+drawers.settings.controller_range = tonumber(minetest.settings:get(
+										'drawers_controller_range_max') or 14)
 -- which cabinet sizes are available on this server
 drawers.settings.use_cabinet_1x1 = not minetest.settings:get_bool('drawers_disable_1x1')
 drawers.settings.use_cabinet_1x2 = not minetest.settings:get_bool('drawers_disable_1x2')
 drawers.settings.use_cabinet_2x2 = not minetest.settings:get_bool('drawers_disable_2x2')
-
--- TODO: add this to server config too.
-drawers.settings.controller_range = 14
 
