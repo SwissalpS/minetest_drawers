@@ -430,7 +430,6 @@ function drawers.controller.find_connected(pos_controller, pos_next, found_posit
 	repeat
 		pos_new = new_positions[index]
 		-- check that this node hasn't been indexed yet and is in range
-		-- TODO probably don't need to compare positins as the current one is already in found_positions
 		if
 			--not is_same_pos(pos_next, pos_new) and
 			not contains_pos(found_positions, pos_new)
@@ -661,7 +660,7 @@ end -- drawers.controller.update_controllers_near
 function drawers.controller.update_network_caches(pos_controller)
 	local us_0 = minetest.get_us_time()
 	-- this list also contains other controller, compactor and trim nodes
-	local all_conected = drawers.controller.find_connected(pos_controller)
+	local found_positions = drawers.controller.find_connected(pos_controller)
 
 	if drawers.settings.be_verbose then
 		local us_1 = minetest.get_us_time()
@@ -675,10 +674,10 @@ function drawers.controller.update_network_caches(pos_controller)
 	local all_compactors = {}
 	local pos_node, handler, id
 	local node
-	local index = #all_conected
+	local index = #found_positions
 	if 0 < index then
 		repeat
-			pos_node = all_conected[index]
+			pos_node = found_positions[index]
 			handler = drawers.cabinet.handler_for(pos_node)
 			-- only get valid handler for actual drawers, not trim or controller
 			if handler then
@@ -692,7 +691,7 @@ function drawers.controller.update_network_caches(pos_controller)
 			index = index - 1
 		until 0 == index
 	end
-	-- and stash this index for later reference
+	-- stash this index for later reference
 	local meta = minetest.get_meta(pos_controller)
 	meta:set_string('cabinets', minetest.serialize(all_cabinets))
 	meta:set_string('compactors', minetest.serialize(all_compactors))

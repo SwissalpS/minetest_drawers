@@ -492,6 +492,7 @@ function Handler:read_meta()
 			else
 				stack_max = 65535
 				-- log a warning to admins
+				-- TODO make translation
 				local warning = '[drawers] ALERT: You have unknown items of type "'
 					.. name .. '" in a drawer at: '
 					.. minetest.pos_to_string(self.pos_cabinet)
@@ -500,7 +501,6 @@ function Handler:read_meta()
 					.. 'Setting max stack to 65535. Players can remove but '
 					.. 'not put more in.'
 				minetest.log('warning', warning)
-				print(warning)
 			end
 			self.infotext[id] = ''
 			self.item_stack_max[id] = stack_max
