@@ -19,6 +19,9 @@ elseif drawers.has_mcl_core then  -- MineClone 2
 	drawers.settings.base_slot_count = 4 * 9
 end
 
+-- jumpdrive compat, read comment in settingtypes.txt
+drawers.settings.after_jump_delay = math.abs(tonumber(minetest.settings:get(
+										'drawers_after_jump_delay') or 1.3))
 -- which cabinet sizes are available on this server
 drawers.settings.use_cabinet_1x1 = not minetest.settings:get_bool('drawers_disable_1x1')
 drawers.settings.use_cabinet_1x2 = not minetest.settings:get_bool('drawers_disable_1x2')

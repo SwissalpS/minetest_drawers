@@ -219,9 +219,12 @@ end -- drawers.cabinet.on_dig
 -- returns nothing
 function drawers.cabinet.on_jump(pos_from, pos_to, context)
 	-- remove old tags and handler
-	minetest.after(1.2, drawers.cabinet.on_destruct, pos_from)
+	minetest.after(drawers.settings.after_jump_delay,
+					drawers.cabinet.on_destruct, pos_from)
+
 	-- spawn new entities which also creates new handler instance
-	minetest.after(1.3, drawers.tag.map.spawn_for, pos_to)
+	minetest.after(drawers.settings.after_jump_delay,
+					drawers.tag.map.spawn_for, pos_to)
 end -- drawers.cabinet.on_jump
 
 function drawers.cabinet.randomize_pos(pos)

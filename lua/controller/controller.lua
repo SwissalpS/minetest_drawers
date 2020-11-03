@@ -489,7 +489,8 @@ end -- drawers.controller.on_construct
 -- returns nothing
 function drawers.controller.on_jump(pos_from, pos_to, context)
 	-- update the net_index after jump has completed
-	minetest.after(1.2, drawers.controller.update_network_caches, pos_to)
+	minetest.after(drawers.settings.after_jump_delay,
+					drawers.controller.update_network_caches, pos_to)
 end -- drawers.controller.on_jump
 
 --- called after allow_metadata_inventory_put when player puts stack into
