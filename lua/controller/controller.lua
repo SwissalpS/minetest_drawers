@@ -529,6 +529,7 @@ end -- drawers.controller.on_receive_fields
 -- stores the map in meta and
 -- returns the table
 function drawers.controller.scan_cabinets(pos_controller)
+	local us_0 = minetest.get_us_time()
 	local net_index = {}
 	local meta = minetest.get_meta(pos_controller)
 	local all_cabinets = minetest.deserialize(meta:get_string('cabinets'))
@@ -540,6 +541,13 @@ function drawers.controller.scan_cabinets(pos_controller)
 		until 0 == index
 	end
 	meta:set_string('net_index', minetest.serialize(net_index))
+
+	if drawers.settings.be_verbose then
+		local us_1 = minetest.get_us_time()
+		minetest.log('action', '[drawers] scan_cabinets('
+			.. minetest.pos_to_string(pos_controller) .. ') took '
+			.. tostring(us_1 - us_0) .. ' us')
+	end
 
 	return net_index
 end -- drawers.controller.scan_cabinets
@@ -614,11 +622,18 @@ end -- drawers.controller.take
 
 --- called when a cabinet, trim, controller or compactor is dug or placed
 function drawers.controller.update_controllers_near(pos_node)
+	local us_0 = minetest.get_us_time()
 	local positions = minetest.find_nodes_in_area(
 		vector.subtract(pos_node, drawers.settings.controller_range),
 		vector.add(pos_node, drawers.settings.controller_range),
 		{ 'drawers:controller' }
 	)
+
+	if drawers.settings.be_verbose then
+		local us_1 = minetest.get_us_time()
+		minetest.log('action', '[drawers] finding nodes in area took '
+			.. tostring(us_1 - us_0) .. ' us')
+	end
 
 	local index = #positions
 	if 0 == index then
@@ -631,13 +646,30 @@ function drawers.controller.update_controllers_near(pos_node)
 		drawers.controller.update_network_caches(pos_controller)
 		index = index - 1
 	until 0 == index
+
+	if not drawers.settings.be_verbose then
+		return
+	end
+	local us_1 = minetest.get_us_time()
+	minetest.log('action', '[drawers] update_controllers_near('
+		.. minetest.pos_to_string(pos_node) .. ') took '
+		.. tostring(us_1 - us_0) .. ' us')
 end -- drawers.controller.update_controllers_near
 
 --- called whenever cache needs updating due to digging or placing of
 -- cabinets, trims, or controllers (soon also compacters)
 function drawers.controller.update_network_caches(pos_controller)
+	local us_0 = minetest.get_us_time()
 	-- this list also contains other controller, compactor and trim nodes
 	local all_conected = drawers.controller.find_connected(pos_controller)
+
+	if drawers.settings.be_verbose then
+		local us_1 = minetest.get_us_time()
+		minetest.log('action', '[drawers] find_connected('
+			.. minetest.pos_to_string(pos_controller) .. ') took '
+			.. tostring(us_1 - us_0) .. ' us')
+	end
+
 	-- now we need to clean out all but cabinet nodes
 	local all_cabinets = {}
 	local all_compactors = {}
@@ -665,5 +697,13 @@ function drawers.controller.update_network_caches(pos_controller)
 	meta:set_string('cabinets', minetest.serialize(all_cabinets))
 	meta:set_string('compactors', minetest.serialize(all_compactors))
 	drawers.controller.scan_cabinets(pos_controller)
+
+	if not drawers.settings.be_verbose then
+		return
+	end
+	local us_1 = minetest.get_us_time()
+	minetest.log('action', '[drawers] update_network_caches('
+		.. minetest.pos_to_string(pos_controller) .. ') took '
+		.. tostring(us_1 - us_0) .. ' us')
 end -- drawers.controller.update_network_caches
 
